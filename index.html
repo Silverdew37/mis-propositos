@@ -130,7 +130,11 @@
   .action-btn:last-child { border-bottom:none; }
   .action-btn.danger { color:var(--red); }
   .action-btn-icon { font-size:18px; width:26px; text-align:center; flex-shrink:0; }
-  .longpress { user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:none; }
+  .btn-opts { background:none; border:none; color:var(--text3); font-size:18px; cursor:pointer; padding:2px 6px; flex-shrink:0; line-height:1; border-radius:6px; }
+  .btn-opts:active { background:var(--card2); }
+  .btn-ver-todo { background:none; border:1px solid var(--border); border-radius:8px; color:var(--text3); font-size:12px; font-family:'DM Sans',sans-serif; padding:7px 14px; cursor:pointer; width:100%; margin-top:4px; transition:all .15s; }
+  .btn-ver-todo:active { background:var(--card2); }
+  .hist-modal-list { padding-top:4px; }
   .hint-row { font-size:10px; color:var(--text3); text-align:right; margin-bottom:4px; margin-top:-6px; }
 </style>
 </head>
@@ -200,6 +204,7 @@
     <button class="ftab" id="pftab-conjuntas" onclick="setPelisSubFiltro('conjuntas',this)">Solo conjuntas</button>
   </div>
   <div id="pelis-historial"></div>
+  <button class="btn-ver-todo" onclick="abrirHistorialModal('pelis')">Ver todo el historial →</button>
 </div>
 
 <!-- LECTURA -->
@@ -257,6 +262,7 @@
     <button class="ftab" id="lftab-fisicos" onclick="setLibrosFiltroTipo('fisicos',this)">Físicos</button>
   </div>
   <div id="lectura-historial"></div>
+  <button class="btn-ver-todo" onclick="abrirHistorialModal('lectura')">Ver todo el historial →</button>
 </div>
 
 <!-- CURSOS -->
@@ -274,8 +280,9 @@
       <div><div class="card-title">Registro semanal</div></div>
       <div class="card-icon" style="background:rgba(248,113,113,.1)">⚖️</div>
     </div>
-    <button class="btn btn-primary btn-sm" style="width:auto;margin-bottom:12px" onclick="openModal('modal-medidas')">+ Registrar esta semana</button>
+    <button class="btn-primary btn-sm btn" style="width:auto;margin-bottom:12px" onclick="openModal('modal-medidas')">+ Registrar esta semana</button>
     <div class="history-scroll" id="medidas-historial"></div>
+    <button class="btn-ver-todo" style="margin-top:8px" onclick="abrirHistorialModal('medidas')">Ver todo el historial →</button>
   </div>
 </div>
 
@@ -298,6 +305,7 @@
   <div class="section-title" style="margin-bottom:6px">Historial de sesiones</div>
   <div class="filter-tabs" id="deporte-anyo-tabs"></div>
   <div id="deporte-historial"></div>
+  <button class="btn-ver-todo" onclick="abrirHistorialModal('deporte')">Ver todo el historial →</button>
 </div>
 
 <!-- NAV -->
@@ -456,7 +464,21 @@
   </div>
 </div>
 
-<!-- ACTION SHEET (menú mantener pulsado) -->
+<!-- MODAL HISTORIAL COMPLETO -->
+<div class="modal-overlay" id="modal-historial">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="modal-title" id="hist-modal-title" style="margin-bottom:0">Historial</div>
+      <span id="hist-modal-count" style="font-size:12px;color:var(--text3)"></span>
+    </div>
+    <div class="filter-tabs" id="hist-modal-filtros"></div>
+    <div id="hist-modal-contenido" class="hist-modal-list"></div>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:14px" onclick="closeModal('modal-historial')">Cerrar</button>
+  </div>
+</div>
+
+<!-- ACTION SHEET (menú ⋯) -->
 <div class="modal-overlay" id="modal-action-sheet">
   <div class="action-sheet">
     <div class="action-sheet-title" id="as-title"></div>
@@ -615,26 +637,146 @@ function buildAnyoTabs(contId, years, activeVar, onClickFn) {
 }
 
 // ══════════════════════════════════════
-// ACTION SHEET (mantener pulsado)
+// ACTION SHEET — simplificado
 // ══════════════════════════════════════
 function showActionSheet(title, buttons) {
+  const overlay = document.getElementById('modal-action-sheet');
   document.getElementById('as-title').textContent = title;
-  document.getElementById('as-buttons').innerHTML = buttons.map(b =>
-    `<button class="action-btn${b.danger?' danger':''}" onclick="closeModal('modal-action-sheet');setTimeout(()=>{${b.fn}},120)">
-      <span class="action-btn-icon">${b.icon}</span>${b.label}
-    </button>`).join('');
-  openModal('modal-action-sheet');
+  const cont = document.getElementById('as-buttons');
+  cont.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'action-btn' + (b.danger ? ' danger' : '');
+    btn.innerHTML = `<span class="action-btn-icon">${b.icon}</span>${b.label}`;
+    btn.addEventListener('click', () => {
+      overlay.classList.remove('open');
+      setTimeout(() => b.callback(), 80);
+    });
+    cont.appendChild(btn);
+  });
+  overlay.classList.add('open');
 }
 
-function longpress(el, fn) {
-  let t, moved=false;
-  el.addEventListener('touchstart', e=>{ 
-    moved=false;
-    t=setTimeout(()=>{ if(!moved){ fn(); navigator.vibrate&&navigator.vibrate(30); } },500);
-  },{passive:true});
-  el.addEventListener('touchmove', ()=>{ moved=true; clearTimeout(t); },{passive:true});
-  el.addEventListener('touchend', e=>{ clearTimeout(t); },{passive:true});
-  el.addEventListener('contextmenu', e=>{ e.preventDefault(); fn(); });
+// ══════════════════════════════════════
+// HISTORIAL MODAL COMPLETO
+// ══════════════════════════════════════
+let histModalSeccion = '';
+let histModalFiltro = 'todo';
+
+const HIST_FILTROS = [
+  { id:'todo',    label:'Todo' },
+  { id:'anyo',    label:'Este año' },
+  { id:'6m',      label:'6 meses' },
+  { id:'3m',      label:'3 meses' },
+  { id:'1m',      label:'Este mes' },
+];
+
+function filtrarPorPeriodo(arr, campo='fecha') {
+  if(histModalFiltro==='todo') return arr;
+  const hoy=new Date();
+  let desde;
+  if(histModalFiltro==='anyo') { desde=new Date(hoy.getFullYear(),0,1); }
+  else if(histModalFiltro==='6m') { desde=new Date(hoy); desde.setMonth(desde.getMonth()-6); }
+  else if(histModalFiltro==='3m') { desde=new Date(hoy); desde.setMonth(desde.getMonth()-3); }
+  else if(histModalFiltro==='1m') { desde=new Date(hoy); desde.setMonth(desde.getMonth()-1); }
+  const desdeStr=desde.toISOString().slice(0,10);
+  return arr.filter(x=>(x[campo]||'')>=desdeStr);
+}
+
+function buildHistFiltros() {
+  document.getElementById('hist-modal-filtros').innerHTML=HIST_FILTROS.map(f=>
+    `<button class="ftab${histModalFiltro===f.id?' active':''}" onclick="histModalFiltro='${f.id}';renderHistModal()">${f.label}</button>`
+  ).join('');
+}
+
+function abrirHistorialModal(seccion) {
+  histModalSeccion=seccion; histModalFiltro='todo';
+  const titulos={pelis:'🎬 Películas',lectura:'📚 Lectura',deporte:'🏃 Deporte',medidas:'⚖️ Peso y medidas'};
+  document.getElementById('hist-modal-title').textContent=titulos[seccion]||'Historial';
+  buildHistFiltros();
+  renderHistModal();
+  openModal('modal-historial');
+}
+
+function renderHistModal() {
+  buildHistFiltros();
+  const cont=document.getElementById('hist-modal-contenido');
+  const fmtIcons={fisico:'📗',digital:'📱',audio:'🎧'};
+  let html='', count=0;
+
+  if(histModalSeccion==='pelis') {
+    let log=filtrarPorPeriodo(getPelisLog());
+    count=log.length;
+    html=log.length?log.map((p,i)=>{
+      const origIdx=getPelisLog().indexOf(p);
+      return `<div class="history-item">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
+          <div class="history-date">${fechaCorta(p.fecha)}${p.nota?' · '+p.nota:''}</div>
+        </div>
+        <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin:0 4px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
+        <button class="btn-opts" onclick="closeModal('modal-historial');peliActionSheet(${origIdx})">⋯</button>
+      </div>`;}).join('')
+      :'<div class="empty"><div class="empty-icon">🎬</div>Sin películas en este período</div>';
+  }
+
+  else if(histModalSeccion==='lectura') {
+    const lmKeyed=getLibrosMes();
+    let indexed=[];
+    Object.entries(lmKeyed).forEach(([mk,arr])=>arr.forEach((l,i)=>indexed.push({l,mk,i})));
+    indexed=filtrarPorPeriodo(indexed.map(x=>({...x,fecha:x.l.fecha})));
+    indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
+    count=indexed.length;
+    html=indexed.length?indexed.map(({l,mk,i})=>{
+      const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
+      return `<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div class="libro-entry-title">${l.titulo}</div>
+          <div class="libro-entry-meta">${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''} ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span></div>
+        </div>
+        <button class="btn-opts" onclick="closeModal('modal-historial');libroLeidoActionSheet('${mk}',${i})">⋯</button>
+      </div>`;}).join('')
+      :'<div class="empty"><div class="empty-icon">📚</div>Sin libros en este período</div>';
+  }
+
+  else if(histModalSeccion==='deporte') {
+    const fullLog=getDeporteLog();
+    let log=filtrarPorPeriodo(fullLog);
+    count=log.length;
+    html=log.length?log.map(s=>{
+      const origIdx=fullLog.indexOf(s);
+      return `<div class="sport-entry" style="display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div class="sport-entry-type">${s.actividad}</div>
+          <div class="sport-entry-detail">${fechaCorta(s.fecha)}${s.duracion?' · '+s.duracion+' min':''}${s.intensidad?' · '+s.intensidad:''}${s.nota?' · '+s.nota:''}</div>
+        </div>
+        <button class="btn-opts" onclick="closeModal('modal-historial');deporteActionSheet(${origIdx})">⋯</button>
+      </div>`;}).join('')
+      :'<div class="empty"><div class="empty-icon">🏃</div>Sin sesiones en este período</div>';
+  }
+
+  else if(histModalSeccion==='medidas') {
+    const datos=getMedidas();
+    let filtered=filtrarPorPeriodo(datos);
+    count=filtered.length;
+    html=filtered.length?filtered.map(m=>{
+      const origIdx=datos.indexOf(m);
+      return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="flex:1;font-size:12px">
+          <span style="color:var(--text3);margin-right:8px">${fechaCorta(m.fecha)}</span>
+          ${m.peso?`<span style="margin-right:6px;font-weight:500">${m.peso} kg</span>`:''}
+          ${m.cintura?`<span style="color:var(--text2);margin-right:5px">cin. ${m.cintura}</span>`:''}
+          ${m.cadera?`<span style="color:var(--text2);margin-right:5px">cad. ${m.cadera}</span>`:''}
+          ${m.pecho?`<span style="color:var(--text2)">pec. ${m.pecho}</span>`:''}
+          ${m.nota?`<div style="font-size:10px;color:var(--text3);margin-top:2px">📝 ${m.nota}</div>`:''}
+        </div>
+        <button class="btn-opts" onclick="closeModal('modal-historial');medidaActionSheet(${origIdx})">⋯</button>
+      </div>`;}).join('')
+      :'<div class="empty"><div class="empty-icon">⚖️</div>Sin registros en este período</div>';
+  }
+
+  document.getElementById('hist-modal-count').textContent=count ? count+' registro'+(count!==1?'s':'') : '';
+  cont.innerHTML=html;
 }
 
 // ── PELIS editar/eliminar ──────────────
@@ -642,8 +784,8 @@ function peliActionSheet(idx) {
   const log=getPelisLog(); const p=log[idx];
   if(!p) return;
   showActionSheet(`${p.titulo}${p.anyo?' ('+p.anyo+')':''}`, [
-    {icon:'✏️', label:'Editar', fn:`abrirEditPeli(${idx})`},
-    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarPeli(${idx})`},
+    {icon:'✏️', label:'Editar', callback:()=>abrirEditPeli(idx)},
+    {icon:'🗑️', label:'Eliminar', danger:true, callback:()=>eliminarPeli(idx)},
   ]);
 }
 function abrirEditPeli(idx) {
@@ -694,8 +836,8 @@ function libroLeidoActionSheet(mk, idx) {
   const lm=getLibrosMes(); const l=(lm[mk]||[])[idx];
   if(!l) return;
   showActionSheet(l.titulo, [
-    {icon:'✏️', label:'Editar', fn:`abrirEditLibro('${mk}',${idx})`},
-    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarLibroLeido('${mk}',${idx})`},
+    {icon:'✏️', label:'Editar', callback:()=>abrirEditLibro(mk,idx)},
+    {icon:'🗑️', label:'Eliminar', danger:true, callback:()=>eliminarLibroLeido(mk,idx)},
   ]);
 }
 function abrirEditLibro(mk, idx) {
@@ -742,8 +884,8 @@ function fisicoActionSheet(id) {
   const b=getBiblioteca().find(x=>x.id===id);
   if(!b) return;
   showActionSheet(b.titulo, [
-    {icon:'✏️', label:'Editar', fn:`abrirEditFisico(${id})`},
-    {icon:'🗑️', label:'Eliminar de biblioteca', danger:true, fn:`eliminarFisico(${id})`},
+    {icon:'✏️', label:'Editar', callback:()=>abrirEditFisico(id)},
+    {icon:'🗑️', label:'Eliminar de biblioteca', danger:true, callback:()=>eliminarFisico(id)},
   ]);
 }
 function abrirEditFisico(id) {
@@ -777,8 +919,8 @@ function deporteActionSheet(idx) {
   const log=getDeporteLog(); const s=log[idx];
   if(!s) return;
   showActionSheet(`${s.actividad} · ${fechaCorta(s.fecha)}`, [
-    {icon:'✏️', label:'Editar', fn:`abrirEditDeporte(${idx})`},
-    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarDeporte(${idx})`},
+    {icon:'✏️', label:'Editar', callback:()=>abrirEditDeporte(idx)},
+    {icon:'🗑️', label:'Eliminar', danger:true, callback:()=>eliminarDeporte(idx)},
   ]);
 }
 function abrirEditDeporte(idx) {
@@ -822,8 +964,8 @@ function medidaActionSheet(idx) {
   const m=getMedidas()[idx];
   if(!m) return;
   showActionSheet(`Registro del ${fechaCorta(m.fecha)}`, [
-    {icon:'✏️', label:'Editar', fn:`abrirEditMedida(${idx})`},
-    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarMedida(${idx})`},
+    {icon:'✏️', label:'Editar', callback:()=>abrirEditMedida(idx)},
+    {icon:'🗑️', label:'Eliminar', danger:true, callback:()=>eliminarMedida(idx)},
   ]);
 }
 function abrirEditMedida(idx) {
@@ -854,9 +996,9 @@ function eliminarMedida(idx) {
 // ── CURSOS: editar nombre/total ──────────
 function cursoEditActionSheet(id) {
   showActionSheet('Opciones del curso', [
-    {icon:'✏️', label:'Editar nombre y total de vídeos', fn:`abrirEditCurso(${id})`},
-    {icon:'↩️', label:'Deshacer último progreso', fn:`deshacerProgresoCurso(${id})`},
-    {icon:'🗑️', label:'Eliminar curso', danger:true, fn:`eliminarCurso(${id})`},
+    {icon:'✏️', label:'Editar nombre y total de vídeos', callback:()=>abrirEditCurso(id)},
+    {icon:'↩️', label:'Deshacer último progreso', callback:()=>deshacerProgresoCurso(id)},
+    {icon:'🗑️', label:'Eliminar curso', danger:true, callback:()=>eliminarCurso(id)},
   ]);
 }
 function abrirEditCurso(id) {
@@ -988,23 +1130,19 @@ function renderPelisHistorial() {
   if(pelisAnyoFiltro!=='todos') log=log.filter(p=>yearOf(p.fecha)===pelisAnyoFiltro);
   const cont=document.getElementById('pelis-historial');
   if(!log.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>Sin películas en este período</div>';return;}
-  // map with original indices from full log
   const fullLog=getPelisLog();
-  cont.innerHTML='<div class="hint-row">Mantén pulsado para editar o eliminar</div>'+log.map(p=>{
+  const mostrar=log.slice(0,5);
+  cont.innerHTML=mostrar.map(p=>{
     const origIdx=fullLog.indexOf(p);
-    return `<div class="history-item longpress" id="peli-item-${origIdx}">
+    return `<div class="history-item">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
         <div class="history-date">${fechaCorta(p.fecha)}${p.nota?' · '+p.nota:''}</div>
       </div>
-      <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin-left:6px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
+      <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin:0 4px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
+      <button class="btn-opts" onclick="peliActionSheet(${origIdx})">⋯</button>
     </div>`;
   }).join('');
-  log.forEach(p=>{
-    const origIdx=fullLog.indexOf(p);
-    const el=document.getElementById('peli-item-'+origIdx);
-    if(el) longpress(el,()=>peliActionSheet(origIdx));
-  });
 }
 
 function renderPelis() {
@@ -1123,45 +1261,46 @@ function setLibrosAnyoFiltro(v,btn) {
 function renderLecturaHistorial() {
   const hist=document.getElementById('lectura-historial');
   const fmtIcons={fisico:'📗',digital:'📱',audio:'🎧'};
-  let todosMes=Object.values(getLibrosMes()).flat();
   const lmKeyed=getLibrosMes();
   const bib=getBiblioteca();
-  const hint='<div class="hint-row">Mantén pulsado para editar o eliminar</div>';
 
   if(librosTipoFiltro==='fisicos') {
     let arr=[...bib];
     if(librosAnyoFiltro!=='todos') arr=arr.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
     if(!arr.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📖</div>Sin libros físicos en este período</div>';return;}
-    hist.innerHTML=hint+arr.map(b=>`
-      <div class="libro-entry longpress" id="fisico-entry-${b.id}">
-        <div class="libro-entry-title">${b.titulo}</div>
-        <div class="libro-entry-meta">
-          ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
-          <span class="chip ${b.leido?'chip-done':'chip-pending'}" style="font-size:10px">${b.leido?'✓ Leído':'○ Pendiente'}</span>
-          ${b.fechaAdq?`<span style="font-size:10px;color:var(--text3)">adq. ${fechaCorta(b.fechaAdq)}</span>`:''}
+    hist.innerHTML=arr.map(b=>`
+      <div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div class="libro-entry-title">${b.titulo}</div>
+          <div class="libro-entry-meta">
+            ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
+            <span class="chip ${b.leido?'chip-done':'chip-pending'}" style="font-size:10px">${b.leido?'✓ Leído':'○ Pendiente'}</span>
+            ${b.fechaAdq?`<span style="font-size:10px;color:var(--text3)">adq. ${fechaCorta(b.fechaAdq)}</span>`:''}
+          </div>
         </div>
+        <button class="btn-opts" onclick="fisicoActionSheet(${b.id})">⋯</button>
       </div>`).join('');
-    arr.forEach(b=>{ const el=document.getElementById('fisico-entry-'+b.id); if(el) longpress(el,()=>fisicoActionSheet(b.id)); });
     return;
   }
 
   if(librosTipoFiltro==='leidos') {
-    // build indexed list to track mk+idx
     let indexed=[];
     Object.entries(lmKeyed).forEach(([mk,arr])=>arr.forEach((l,i)=>indexed.push({l,mk,i})));
     if(librosAnyoFiltro!=='todos') indexed=indexed.filter(x=>yearOf(x.l.fecha)===librosAnyoFiltro);
     indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
     if(!indexed.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin libros leídos en este período</div>';return;}
-    hist.innerHTML=hint+indexed.map(({l,mk,i})=>{
+    hist.innerHTML=indexed.map(({l,mk,i})=>{
       const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
-      return `<div class="libro-entry longpress" id="libro-entry-${mk}-${i}">
-        <div class="libro-entry-title">${l.titulo}</div>
-        <div class="libro-entry-meta">
-          ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
-          ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+      return `<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
+        <div style="flex:1">
+          <div class="libro-entry-title">${l.titulo}</div>
+          <div class="libro-entry-meta">
+            ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
+            ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+          </div>
         </div>
+        <button class="btn-opts" onclick="libroLeidoActionSheet('${mk}',${i})">⋯</button>
       </div>`;}).join('');
-    indexed.forEach(({mk,i})=>{ const el=document.getElementById(`libro-entry-${mk}-${i}`); if(el) longpress(el,()=>libroLeidoActionSheet(mk,i)); });
     return;
   }
 
@@ -1178,27 +1317,31 @@ function renderLecturaHistorial() {
 
   const leidosHtml=indexed.map(({l,mk,i})=>{
     const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
-    return `<div class="libro-entry longpress" id="libro-entry-${mk}-${i}">
-      <div class="libro-entry-title">${l.titulo}</div>
-      <div class="libro-entry-meta">
-        <span class="chip chip-done" style="font-size:10px">✓ Leído</span>
-        ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+    return `<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
+      <div style="flex:1">
+        <div class="libro-entry-title">${l.titulo}</div>
+        <div class="libro-entry-meta">
+          <span class="chip chip-done" style="font-size:10px">✓ Leído</span>
+          ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+        </div>
       </div>
+      <button class="btn-opts" onclick="libroLeidoActionSheet('${mk}',${i})">⋯</button>
     </div>`;}).join('');
 
   const pendHtml=pendientes.length?`
     <div style="font-size:11px;color:var(--text3);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px">Físicos pendientes (${pendientes.length})</div>
-    ${pendientes.map(b=>`<div class="libro-entry longpress" id="fisico-entry-${b.id}">
-      <div class="libro-entry-title">${b.titulo}</div>
-      <div class="libro-entry-meta">
-        ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
-        <span class="chip chip-pending" style="font-size:10px">○ Pendiente</span>
+    ${pendientes.map(b=>`<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
+      <div style="flex:1">
+        <div class="libro-entry-title">${b.titulo}</div>
+        <div class="libro-entry-meta">
+          ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
+          <span class="chip chip-pending" style="font-size:10px">○ Pendiente</span>
+        </div>
       </div>
+      <button class="btn-opts" onclick="fisicoActionSheet(${b.id})">⋯</button>
     </div>`).join('')}`:'';
 
-  hist.innerHTML=hint+leidosHtml+pendHtml;
-  indexed.forEach(({mk,i})=>{ const el=document.getElementById(`libro-entry-${mk}-${i}`); if(el) longpress(el,()=>libroLeidoActionSheet(mk,i)); });
-  pendientes.forEach(b=>{ const el=document.getElementById('fisico-entry-'+b.id); if(el) longpress(el,()=>fisicoActionSheet(b.id)); });
+  hist.innerHTML=leidosHtml+pendHtml;
 }
 
 function renderLectura() {
@@ -1343,20 +1486,18 @@ function guardarMedidas() {
 function renderCuerpo() {
   const datos=getMedidas(); const hist=document.getElementById('medidas-historial');
   if(!datos.length){hist.innerHTML='<div class="empty" style="padding:16px 0"><div class="empty-icon">⚖️</div>Sin registros aún</div>';return;}
-  hist.innerHTML='<div class="hint-row" style="margin-bottom:6px">Mantén pulsado una fila para editar o eliminar</div>'+
-  `<table class="medidas-table">
-    <tr><th>Fecha</th><th>Peso</th><th>Cintura</th><th>Cadera</th><th>Pecho</th></tr>
-    ${datos.map((m,i)=>`
-      <tr id="med-row-${i}" class="longpress" style="cursor:pointer">
-        <td style="font-size:11px">${fechaCorta(m.fecha)}</td>
-        <td>${m.peso?m.peso+' kg':'—'}</td>
-        <td>${m.cintura?m.cintura+' cm':'—'}</td>
-        <td>${m.cadera?m.cadera+' cm':'—'}</td>
-        <td>${m.pecho?m.pecho+' cm':'—'}</td>
-      </tr>
-      ${m.nota?`<tr><td colspan="5" style="font-size:10px;color:var(--text3);padding-top:0;padding-bottom:5px">📝 ${m.nota}</td></tr>`:''}`).join('')}
-  </table>`;
-  datos.forEach((_,i)=>{ const el=document.getElementById('med-row-'+i); if(el) longpress(el,()=>medidaActionSheet(i)); });
+  hist.innerHTML=datos.slice(0,5).map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="flex:1;font-size:12px">
+        <span style="color:var(--text3);margin-right:8px">${fechaCorta(m.fecha)}</span>
+        ${m.peso?`<span style="margin-right:6px">${m.peso} kg</span>`:''}
+        ${m.cintura?`<span style="color:var(--text2);margin-right:6px">cin. ${m.cintura}</span>`:''}
+        ${m.cadera?`<span style="color:var(--text2);margin-right:6px">cad. ${m.cadera}</span>`:''}
+        ${m.pecho?`<span style="color:var(--text2)">pec. ${m.pecho}</span>`:''}
+        ${m.nota?`<div style="font-size:10px;color:var(--text3);margin-top:2px">📝 ${m.nota}</div>`:''}
+      </div>
+      <button class="btn-opts" onclick="medidaActionSheet(${i})">⋯</button>
+    </div>`).join('');
 }
 
 // ══════════════════════════════════════
@@ -1402,13 +1543,16 @@ function renderDeporteHistorial() {
   const fullLog=getDeporteLog();
   const hist=document.getElementById('deporte-historial');
   if(!log.length){hist.innerHTML='<div class="empty"><div class="empty-icon">🏃</div>Sin sesiones en este período</div>';return;}
-  hist.innerHTML='<div class="hint-row">Mantén pulsado para editar o eliminar</div>'+log.map(s=>{
+  const mostrar=log.slice(0,5);
+  hist.innerHTML=mostrar.map(s=>{
     const origIdx=fullLog.indexOf(s);
-    return `<div class="sport-entry longpress" id="dep-entry-${origIdx}">
-      <div class="sport-entry-type">${s.actividad}</div>
-      <div class="sport-entry-detail">${fechaCorta(s.fecha)}${s.duracion?' · '+s.duracion+' min':''}${s.intensidad?' · '+s.intensidad:''}${s.nota?' · '+s.nota:''}</div>
+    return `<div class="sport-entry" style="display:flex;align-items:flex-start;gap:8px">
+      <div style="flex:1">
+        <div class="sport-entry-type">${s.actividad}</div>
+        <div class="sport-entry-detail">${fechaCorta(s.fecha)}${s.duracion?' · '+s.duracion+' min':''}${s.intensidad?' · '+s.intensidad:''}${s.nota?' · '+s.nota:''}</div>
+      </div>
+      <button class="btn-opts" onclick="deporteActionSheet(${origIdx})">⋯</button>
     </div>`;}).join('');
-  log.forEach(s=>{ const origIdx=fullLog.indexOf(s); const el=document.getElementById('dep-entry-'+origIdx); if(el) longpress(el,()=>deporteActionSheet(origIdx)); });
 }
 function renderDeporte() {
   const sw=semanaKey(now); const semData=getDeporteSem()[sw]||[];
