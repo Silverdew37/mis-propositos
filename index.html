@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Mis Propósitos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
+  :root {
+    --bg:#0f0f1a; --bg2:#1a1a2e; --bg3:#16213e;
+    --card:#1e1e35; --card2:#252540;
+    --accent:#7c6af7; --accent2:#a594f9; --accent3:#c9bcff;
+    --green:#4ade80; --green2:#22c55e; --amber:#fbbf24; --red:#f87171;
+    --text:#f0eeff; --text2:#a8a0c8; --text3:#6b6490;
+    --border:rgba(124,106,247,0.2); --border2:rgba(124,106,247,0.35);
+    --radius:16px; --radius-sm:10px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; max-width:480px; margin:0 auto; padding-bottom:84px; }
+
+  .header { background:var(--bg2); border-bottom:1px solid var(--border); padding:18px 20px 14px; position:sticky; top:0; z-index:100; }
+  .header-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:3px; }
+  .header h1 { font-family:'DM Serif Display',serif; font-size:21px; font-weight:400; letter-spacing:-0.3px; }
+  .header-date { font-size:11px; color:var(--text3); }
+  .week-badge { background:rgba(124,106,247,0.15); border:1px solid var(--border2); border-radius:20px; padding:3px 10px; font-size:11px; color:var(--accent3); }
+
+  .section { display:none; padding:14px 14px 6px; }
+  .section.active { display:block; }
+
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; }
+  .card-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; gap:8px; }
+  .card-title { font-size:14px; font-weight:500; line-height:1.3; }
+  .card-subtitle { font-size:11px; color:var(--text3); margin-top:2px; }
+  .card-icon { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+
+  .progress-bar { background:rgba(255,255,255,0.06); border-radius:6px; height:5px; overflow:hidden; margin-bottom:7px; }
+  .progress-fill { height:100%; border-radius:6px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .4s ease; }
+  .progress-fill.done { background:linear-gradient(90deg,var(--green2),var(--green)); }
+
+  .chip { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; border-radius:11px; font-size:11px; font-weight:500; }
+  .chip-done { background:rgba(74,222,128,.12); color:var(--green); }
+  .chip-pending { background:rgba(251,191,36,.12); color:var(--amber); }
+  .chip-info { background:rgba(124,106,247,.15); color:var(--accent3); }
+
+  .btn { padding:9px 16px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; font-family:'DM Sans',sans-serif; }
+  .btn:active { transform:scale(0.97); }
+  .btn-primary { background:var(--accent); color:white; width:100%; padding:12px; border-radius:var(--radius-sm); font-size:14px; }
+  .btn-secondary { background:var(--card2); color:var(--text2); border:1px solid var(--border); }
+  .btn-sm { padding:6px 12px; font-size:12px; border-radius:8px; }
+  .btn-check { background:rgba(74,222,128,.12); color:var(--green); border:1px solid rgba(74,222,128,.25); }
+  .btn-del { background:none; border:none; color:var(--text3); font-size:15px; cursor:pointer; padding:2px 4px; }
+  .btn-del:hover { color:var(--red); }
+
+  .input { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 13px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; width:100%; outline:none; transition:border-color .2s; }
+  .input:focus { border-color:var(--accent); }
+  .input::placeholder { color:var(--text3); }
+  .input-label { font-size:11px; color:var(--text3); margin-bottom:4px; display:block; }
+  .form-group { margin-bottom:10px; }
+  .form-row { display:flex; gap:8px; }
+  .form-row .form-group { flex:1; }
+  input[type="date"].input { color-scheme:dark; }
+
+  .fmt-btn { padding:6px 12px; border-radius:20px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); color:var(--text3); background:transparent; font-family:'DM Sans',sans-serif; transition:all .15s; }
+  .fmt-btn.sel { background:rgba(124,106,247,.18); border-color:var(--border2); color:var(--accent3); }
+  .format-toggles { display:flex; gap:6px; flex-wrap:wrap; }
+
+  .week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin:8px 0 5px; }
+  .day-btn { aspect-ratio:1; border-radius:7px; border:1px solid var(--border); background:var(--bg3); color:var(--text3); font-size:10px; font-weight:500; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; transition:all .2s; font-family:'DM Sans',sans-serif; }
+  .day-btn.done { background:rgba(74,222,128,.15); border-color:rgba(74,222,128,.4); color:var(--green); }
+  .day-btn.today { border-color:var(--accent); color:var(--accent2); }
+  .day-btn .dot { width:4px; height:4px; border-radius:50%; background:currentColor; opacity:.6; }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--bg2); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:18px 18px 34px; width:100%; max-width:480px; animation:slideUp .28s ease; max-height:90vh; overflow-y:auto; }
+  @keyframes slideUp { from{transform:translateY(28px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-handle { width:38px; height:4px; background:var(--border2); border-radius:2px; margin:0 auto 16px; }
+  .modal-title { font-size:16px; font-weight:600; margin-bottom:14px; }
+
+  .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:var(--bg2); border-top:1px solid var(--border); display:flex; padding:8px 6px 16px; gap:2px; z-index:100; }
+  .nav-btn { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 3px 5px; border-radius:10px; border:none; background:transparent; color:var(--text3); font-size:9px; font-family:'DM Sans',sans-serif; cursor:pointer; transition:all .2s; }
+  .nav-btn.active { color:var(--accent2); background:rgba(124,106,247,.1); }
+  .nav-icon { font-size:19px; line-height:1; }
+
+  .resumen-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+  .stat-mini { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px; text-align:center; }
+  .stat-mini-val { font-size:22px; font-family:'DM Serif Display',serif; color:var(--accent2); }
+  .stat-mini-lbl { font-size:10px; color:var(--text3); margin-top:1px; }
+
+  .section-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.8px; margin:18px 0 9px; }
+  .section-title:first-child { margin-top:2px; }
+
+  .filter-tabs { display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; margin-bottom:10px; }
+  .filter-tabs::-webkit-scrollbar { display:none; }
+  .ftab { flex-shrink:0; padding:5px 13px; border-radius:16px; font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--border); color:var(--text3); background:transparent; font-family:'DM Sans',sans-serif; transition:all .2s; white-space:nowrap; }
+  .ftab.active { background:rgba(124,106,247,.15); border-color:var(--border2); color:var(--accent3); }
+
+  .history-item { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .history-item:last-child { border-bottom:none; }
+  .history-date { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .sport-entry { background:var(--bg3); border-radius:var(--radius-sm); padding:9px 11px; margin-bottom:7px; border:1px solid var(--border); }
+  .sport-entry-type { font-size:13px; font-weight:500; }
+  .sport-entry-detail { font-size:11px; color:var(--text3); margin-top:2px; }
+
+  .libro-entry { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:7px; }
+  .libro-entry-title { font-size:13px; font-weight:500; margin-bottom:4px; }
+  .libro-entry-meta { display:flex; align-items:center; gap:5px; flex-wrap:wrap; }
+  .chip-format { background:rgba(124,106,247,.1); color:var(--accent2); border:1px solid var(--border); font-size:10px; padding:2px 6px; border-radius:8px; }
+
+  .sel-list { max-height:180px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg3); }
+  .sel-item { padding:9px 12px; border-bottom:1px solid rgba(255,255,255,.04); cursor:pointer; font-size:12px; }
+  .sel-item:last-child { border-bottom:none; }
+  .sel-item:active { background:rgba(124,106,247,.1); }
+  .sel-item.selected { background:rgba(124,106,247,.12); color:var(--accent3); }
+
+  .history-scroll { max-height:220px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .medidas-table { width:100%; font-size:12px; border-collapse:collapse; }
+  .medidas-table th { color:var(--text3); font-weight:500; padding:5px 3px; text-align:left; font-size:10px; }
+  .medidas-table td { padding:7px 3px; border-top:1px solid rgba(255,255,255,.04); }
+  .curso-actions { margin-top:9px; }
+  .empty { text-align:center; padding:28px 16px; color:var(--text3); font-size:13px; }
+  .empty-icon { font-size:32px; margin-bottom:7px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <h1>Mis Propósitos ✨</h1>
+    <span class="week-badge" id="semana-badge">Sem 0</span>
+  </div>
+  <div class="header-date" id="fecha-hoy"></div>
+</div>
+
+<!-- RESUMEN -->
+<div id="sec-resumen" class="section active">
+  <div class="section-title">Esta semana</div>
+  <div class="resumen-grid" id="resumen-stats"></div>
+  <div id="resumen-cards"></div>
+</div>
+
+<!-- PELIS -->
+<div id="sec-pelis" class="section">
+  <div class="section-title">Seguimiento</div>
+
+  <!-- Contadores globales -->
+  <div class="card" style="padding:12px 14px;margin-bottom:10px">
+    <div style="display:flex;gap:0">
+      <div style="flex:1;text-align:center;border-right:1px solid var(--border)">
+        <div style="font-size:24px;font-family:'DM Serif Display',serif;color:var(--accent2)" id="peli-count-anyo">0</div>
+        <div style="font-size:10px;color:var(--text3)" id="peli-count-anyo-lbl">este año</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:24px;font-family:'DM Serif Display',serif;color:var(--accent3)" id="peli-count-total">0</div>
+        <div style="font-size:10px;color:var(--text3)">en total</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Una peli a la semana</div><div class="card-subtitle" id="peli-sem-sub"></div></div>
+      <div class="card-icon" style="background:rgba(124,106,247,.15)">🎬</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="peli-sem-bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span id="peli-sem-count" style="font-size:12px;color:var(--text3)">0 de 1</span>
+      <span id="peli-sem-chip"></span>
+    </div>
+    <button class="btn btn-primary btn-sm" style="width:auto" onclick="openModalPeli('semanal')">+ Registrar peli vista</button>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Una peli conjunta al mes</div><div class="card-subtitle" id="peli-mes-sub"></div></div>
+      <div class="card-icon" style="background:rgba(165,148,249,.15)">💑</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="peli-mes-bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span id="peli-mes-count" style="font-size:12px;color:var(--text3)">0 de 1</span>
+      <span id="peli-mes-chip"></span>
+    </div>
+    <button class="btn btn-primary btn-sm" style="width:auto" onclick="openModalPeli('conjunta')">+ Registrar peli conjunta</button>
+  </div>
+  <div class="section-title" style="margin-bottom:6px">Historial</div>
+  <div class="filter-tabs" id="pelis-anyo-tabs"></div>
+  <div class="filter-tabs" style="margin-top:-4px">
+    <button class="ftab active" id="pftab-todas" onclick="setPelisSubFiltro('todas',this)">Todas</button>
+    <button class="ftab" id="pftab-conjuntas" onclick="setPelisSubFiltro('conjuntas',this)">Solo conjuntas</button>
+  </div>
+  <div id="pelis-historial"></div>
+</div>
+
+<!-- LECTURA -->
+<div id="sec-lectura" class="section">
+  <div class="section-title">Objetivo mensual</div>
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Un libro al mes</div><div class="card-subtitle" id="libro-mes-sub"></div></div>
+      <div class="card-icon" style="background:rgba(34,197,94,.12)">📚</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="libro-mes-bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span id="libro-mes-count" style="font-size:12px;color:var(--text3)">0 de 1</span>
+      <span id="libro-mes-chip"></span>
+    </div>
+    <button class="btn btn-primary btn-sm" style="width:auto" onclick="abrirModalLibroLeido()">+ Marcar libro leído</button>
+  </div>
+
+  <div class="section-title">Biblioteca física</div>
+  <!-- Contador global de pendientes -->
+  <div class="card" style="padding:12px 14px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:32px;font-family:'DM Serif Display',serif" id="bib-pend-val">0</div>
+      <div>
+        <div style="font-size:13px;font-weight:500">Libros físicos pendientes</div>
+        <div style="font-size:11px;color:var(--text3)">en total, de todos los años</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" style="margin-left:auto;border-color:rgba(251,191,36,.3);color:var(--amber);white-space:nowrap" onclick="abrirModalFisicoNuevo()">+ Añadir</button>
+    </div>
+  </div>
+  <!-- Stats anuales -->
+  <div class="card">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px" id="bib-anyo-label">Este año</div>
+    <div style="display:flex;gap:10px;margin-bottom:0">
+      <div style="flex:1;text-align:center">
+        <div style="font-size:24px;font-family:'DM Serif Display',serif;color:var(--green)" id="bib-leidos-val">0</div>
+        <div style="font-size:10px;color:var(--text3)">leídos</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:24px;font-family:'DM Serif Display',serif;color:var(--red)" id="bib-pendanyo-val">0</div>
+        <div style="font-size:10px;color:var(--text3)">pendientes</div>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:24px;font-family:'DM Serif Display',serif;color:var(--amber)" id="bib-comprados-val">0</div>
+        <div style="font-size:10px;color:var(--text3)">comprados</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:6px">Todos los registros</div>
+  <div class="filter-tabs" id="libros-anyo-tabs"></div>
+  <div class="filter-tabs" style="margin-top:-4px">
+    <button class="ftab active" id="lftab-todos" onclick="setLibrosFiltroTipo('todos',this)">Todos</button>
+    <button class="ftab" id="lftab-leidos" onclick="setLibrosFiltroTipo('leidos',this)">Leídos</button>
+    <button class="ftab" id="lftab-fisicos" onclick="setLibrosFiltroTipo('fisicos',this)">Físicos</button>
+  </div>
+  <div id="lectura-historial"></div>
+</div>
+
+<!-- CURSOS -->
+<div id="sec-cursos" class="section">
+  <div class="section-title">Cursos</div>
+  <div id="cursos-lista"></div>
+  <button class="btn btn-primary" onclick="openModal('modal-nuevo-curso')" style="margin-top:6px">+ Añadir curso</button>
+</div>
+
+<!-- CUERPO -->
+<div id="sec-cuerpo" class="section">
+  <div class="section-title">Peso y medidas</div>
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">Registro semanal</div></div>
+      <div class="card-icon" style="background:rgba(248,113,113,.1)">⚖️</div>
+    </div>
+    <button class="btn btn-primary btn-sm" style="width:auto;margin-bottom:12px" onclick="openModal('modal-medidas')">+ Registrar esta semana</button>
+    <div class="history-scroll" id="medidas-historial"></div>
+  </div>
+</div>
+
+<!-- DEPORTE -->
+<div id="sec-deporte" class="section">
+  <div class="section-title">Esta semana</div>
+  <div class="card">
+    <div class="card-header">
+      <div><div class="card-title">3 veces a la semana</div><div class="card-subtitle" id="deporte-sem-sub"></div></div>
+      <div class="card-icon" style="background:rgba(74,222,128,.1)">🏃</div>
+    </div>
+    <div class="week-grid" id="deporte-week-grid"></div>
+    <div class="progress-bar" style="margin-top:9px"><div class="progress-fill" id="deporte-bar" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-top:3px">
+      <span id="deporte-count" style="font-size:12px;color:var(--text3)">0 de 3 días</span>
+      <span id="deporte-chip"></span>
+    </div>
+    <button class="btn btn-check btn-sm" onclick="abrirModalDeporte()">+ Registrar sesión</button>
+  </div>
+  <div class="section-title" style="margin-bottom:6px">Historial de sesiones</div>
+  <div class="filter-tabs" id="deporte-anyo-tabs"></div>
+  <div id="deporte-historial"></div>
+</div>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="navTo('resumen',this)"><span class="nav-icon">🏠</span>Resumen</button>
+  <button class="nav-btn" onclick="navTo('pelis',this)"><span class="nav-icon">🎬</span>Pelis</button>
+  <button class="nav-btn" onclick="navTo('lectura',this)"><span class="nav-icon">📚</span>Lectura</button>
+  <button class="nav-btn" onclick="navTo('cursos',this)"><span class="nav-icon">🎓</span>Cursos</button>
+  <button class="nav-btn" onclick="navTo('cuerpo',this)"><span class="nav-icon">⚖️</span>Cuerpo</button>
+  <button class="nav-btn" onclick="navTo('deporte',this)"><span class="nav-icon">🏃</span>Deporte</button>
+</nav>
+
+<!-- ══════ MODALS ══════ -->
+
+<div class="modal-overlay" id="modal-peli">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-peli-title">Registrar película</div>
+    <div class="form-group"><label class="input-label">Título</label><input class="input" id="peli-titulo" placeholder="Título de la película..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Año (opcional)</label><input class="input" id="peli-anyo" type="number" min="1900" max="2100" placeholder="2025"></div>
+      <div class="form-group"><label class="input-label">Fecha vista</label><input class="input" id="peli-fecha" type="date"></div>
+    </div>
+    <div class="form-group"><label class="input-label">Nota (opcional)</label><input class="input" id="peli-nota" placeholder="¿Qué te pareció?"></div>
+    <input type="hidden" id="peli-tipo-hidden">
+    <button class="btn btn-primary" onclick="guardarPeli()">Guardar</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-peli')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-libro-leido">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Libro leído</div>
+    <div class="form-group">
+      <label class="input-label">Título</label>
+      <div id="fisicos-disponibles-wrap" style="display:none;margin-bottom:8px">
+        <p style="font-size:11px;color:var(--text3);margin-bottom:5px">¿Es uno de tus físicos? Tócalo para seleccionar:</p>
+        <div class="sel-list" id="lista-fisicos-sel"></div>
+        <p style="font-size:11px;color:var(--text3);margin:7px 0 4px">O escribe uno nuevo:</p>
+      </div>
+      <input class="input" id="libro-titulo" placeholder="Título del libro...">
+    </div>
+    <div class="form-group"><label class="input-label">Autor (opcional)</label><input class="input" id="libro-autor" placeholder="Autor..."></div>
+    <div class="form-group"><label class="input-label">Fecha de fin</label><input class="input" id="libro-fecha" type="date"></div>
+    <div class="form-group">
+      <label class="input-label">Formato leído (puedes elegir varios)</label>
+      <div class="format-toggles">
+        <button class="fmt-btn" data-fmt="fisico" onclick="this.classList.toggle('sel')">📗 Físico</button>
+        <button class="fmt-btn" data-fmt="digital" onclick="this.classList.toggle('sel')">📱 Digital</button>
+        <button class="fmt-btn" data-fmt="audio" onclick="this.classList.toggle('sel')">🎧 Audiolibro</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="guardarLibroLeido()">Guardar</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-libro-leido')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-libro-fisico-nuevo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📖 Añadir libro físico</div>
+    <div class="form-group"><label class="input-label">Título</label><input class="input" id="fisico-titulo" placeholder="Título..."></div>
+    <div class="form-group"><label class="input-label">Autor (opcional)</label><input class="input" id="fisico-autor" placeholder="Autor..."></div>
+    <div class="form-group" id="fisico-fecha-group">
+      <label class="input-label">Fecha de compra</label>
+      <input class="input" id="fisico-fecha" type="date">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;margin-top:-4px">
+      <input type="checkbox" id="fisico-sin-fecha" onchange="toggleFisicoFecha(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <label for="fisico-sin-fecha" style="font-size:12px;color:var(--text3);cursor:pointer">No recuerdo la fecha (no contabilizar en estadísticas anuales)</label>
+    </div>
+    <button class="btn btn-primary" onclick="guardarLibroFisicoNuevo()">Añadir a biblioteca</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-libro-fisico-nuevo')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-nuevo-curso">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nuevo curso</div>
+    <div class="form-group"><label class="input-label">Nombre del curso</label><input class="input" id="curso-nombre" placeholder="Nombre..."></div>
+    <div class="form-group"><label class="input-label">Total de vídeos</label><input class="input" id="curso-total" type="number" min="1" placeholder="Ej: 48"></div>
+    <button class="btn btn-primary" onclick="guardarNuevoCurso()">Añadir curso</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-nuevo-curso')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-medidas">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registro semanal</div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Peso (kg)</label><input class="input" id="med-peso" type="number" step="0.1" placeholder="70.5"></div>
+      <div class="form-group"><label class="input-label">Cintura (cm)</label><input class="input" id="med-cintura" type="number" step="0.5" placeholder="80"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Cadera (cm)</label><input class="input" id="med-cadera" type="number" step="0.5" placeholder="90"></div>
+      <div class="form-group"><label class="input-label">Pecho (cm)</label><input class="input" id="med-pecho" type="number" step="0.5" placeholder="95"></div>
+    </div>
+    <div class="form-group"><label class="input-label">Nota (opcional)</label><input class="input" id="med-nota" placeholder="Observaciones..."></div>
+    <button class="btn btn-primary" onclick="guardarMedidas()">Guardar registro</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-medidas')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-deporte">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Sesión de deporte</div>
+    <div class="form-group"><label class="input-label">Actividad</label><input class="input" id="dep-actividad" placeholder="Ej: Correr, Gym, Bici, Yoga..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Duración (min)</label><input class="input" id="dep-duracion" type="number" min="1" placeholder="45"></div>
+      <div class="form-group">
+        <label class="input-label">Intensidad</label>
+        <select class="input" id="dep-intensidad">
+          <option value="Suave">🟢 Suave</option>
+          <option value="Moderada" selected>🟡 Moderada</option>
+          <option value="Intensa">🔴 Intensa</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="input-label">Fecha (para registros pasados)</label><input class="input" id="dep-fecha" type="date"></div>
+    <div class="form-group"><label class="input-label">Nota (opcional)</label><input class="input" id="dep-nota" placeholder="Detalles..."></div>
+    <button class="btn btn-primary" onclick="guardarDeporte()">Registrar</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-deporte')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-videos-curso">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-videos-titulo">Registrar progreso</div>
+    <div class="form-group">
+      <label class="input-label">Fecha</label>
+      <input class="input" id="curso-videos-fecha" type="date">
+    </div>
+    <div id="curso-videos-modo-wrap">
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="ftab active" id="cvmodo-anyadir" onclick="setCursoModo('anyadir',this)" style="flex:1;text-align:center">+ Añadir vídeos</button>
+        <button class="ftab" id="cvmodo-hasta" onclick="setCursoModo('hasta',this)" style="flex:1;text-align:center">Hasta el vídeo nº</button>
+      </div>
+    </div>
+    <div class="form-group" id="cv-group-anyadir">
+      <label class="input-label">Vídeos vistos en esta sesión</label>
+      <input class="input" id="curso-videos-hoy" type="number" min="1" placeholder="Ej: 3">
+    </div>
+    <div class="form-group" id="cv-group-hasta" style="display:none">
+      <label class="input-label" id="cv-hasta-label">He llegado hasta el vídeo nº</label>
+      <input class="input" id="curso-videos-hasta" type="number" min="1" placeholder="Ej: 12">
+      <div style="font-size:11px;color:var(--text3);margin-top:4px" id="cv-hasta-info"></div>
+    </div>
+    <input type="hidden" id="curso-videos-id">
+    <button class="btn btn-primary" onclick="guardarVideosCurso()">Guardar</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-videos-curso')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// DB & UTILS
+// ══════════════════════════════════════
+const DB = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch(e) { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+const now = new Date();
+const DIAS = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function semanaKey(d) {
+  const t = new Date(d), day = t.getDay()||7;
+  t.setDate(t.getDate()+4-day);
+  const s = new Date(t.getFullYear(),0,1);
+  return `${t.getFullYear()}-W${String(Math.ceil(((t-s)/86400000+1)/7)).padStart(2,'0')}`;
+}
+function mesKey(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` }
+function yearOf(s) { return s ? s.slice(0,4) : String(now.getFullYear()); }
+function fechaCorta(s) { const d=new Date(s+'T12:00:00'); return `${d.getDate()} ${MESES[d.getMonth()].slice(0,3)} ${d.getFullYear()}`; }
+function hoyStr() { return now.toISOString().slice(0,10); }
+function numSemana(d) {
+  const t=new Date(d),day=t.getDay()||7; t.setDate(t.getDate()+4-day);
+  const s=new Date(t.getFullYear(),0,1); return Math.ceil(((t-s)/86400000+1)/7);
+}
+function chip(ok,si,no) { return ok?`<span class="chip chip-done">✓ ${si}</span>`:`<span class="chip chip-pending">○ ${no}</span>`; }
+function getYearsFrom(arr,campo='fecha') { return [...new Set(arr.map(x=>yearOf(x[campo])))].filter(Boolean).sort((a,b)=>b-a); }
+function buildAnyoTabs(contId, years, activeVar, onClickFn) {
+  const c = document.getElementById(contId);
+  const all = ['todos',...years];
+  c.innerHTML = all.map(y=>{
+    const lbl = y==='todos'?'Todos':y;
+    return `<button class="ftab${window[activeVar]===y?' active':''}" onclick="${onClickFn}('${y}',this)">${lbl}</button>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// MIGRACIÓN DE DATOS (compatibilidad)
+// ══════════════════════════════════════
+(function migrar() {
+  // pelis-log: garantizar campos mínimos
+  const plog = DB.get('pelis-log')||[];
+  let pd=false;
+  plog.forEach(p=>{ if(!p.fecha){p.fecha=hoyStr();pd=true;} if(!p.tipo){p.tipo='semanal';pd=true;} });
+  if(pd) DB.set('pelis-log',plog);
+
+  // libros-mes: añadir campo formatos si falta
+  const lm = DB.get('libros-mes')||{};
+  let ld=false;
+  Object.values(lm).forEach(arr=>arr.forEach(l=>{ if(!l.formatos){l.formatos=[];ld=true;} }));
+  if(ld) DB.set('libros-mes',lm);
+
+  // libros-fisicos formato antiguo { leidos:[], comprados:[] } → libros-biblioteca
+  const fisViejo = DB.get('libros-fisicos');
+  if(fisViejo && Array.isArray(fisViejo.comprados) && !DB.get('libros-biblioteca')) {
+    const bib = [];
+    (fisViejo.comprados||[]).forEach((l,i)=>{
+      const yaLeido = (fisViejo.leidos||[]).find(x=>x.titulo===l.titulo);
+      bib.push({ id:Date.now()+i, titulo:l.titulo||'', autor:'', fechaAdq:l.fecha||hoyStr(), leido:!!yaLeido, fechaLeido:yaLeido?yaLeido.fecha:null });
+    });
+    DB.set('libros-biblioteca',bib);
+  }
+
+  // deporte-log: garantizar campo fecha
+  const dlog = DB.get('deporte-log')||[];
+  let dd=false;
+  dlog.forEach(s=>{ if(!s.fecha){s.fecha=hoyStr();dd=true;} });
+  if(dd) DB.set('deporte-log',dlog);
+})();
+
+// ══════════════════════════════════════
+// NAV & MODALS
+// ══════════════════════════════════════
+function navTo(sec,btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  btn.classList.add('active');
+  ({resumen:renderResumen,pelis:renderPelis,lectura:renderLectura,cursos:renderCursos,cuerpo:renderCuerpo,deporte:renderDeporte})[sec]?.();
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// ══════════════════════════════════════
+// HEADER
+// ══════════════════════════════════════
+document.getElementById('fecha-hoy').textContent = `${DIAS[now.getDay()]} ${now.getDate()} de ${MESES[now.getMonth()]} de ${now.getFullYear()}`;
+document.getElementById('semana-badge').textContent = `Sem ${numSemana(now)}`;
+
+// ══════════════════════════════════════
+// PELIS
+// ══════════════════════════════════════
+let pelisAnyoFiltro = 'todos';
+let pelisTipoFiltro = 'todas';
+
+function getPelisSem() { return DB.get('pelis-sem')||{}; }
+function getPelisMes() { return DB.get('pelis-mes')||{}; }
+function getPelisLog()  { return DB.get('pelis-log')||[]; }
+
+function openModalPeli(tipo) {
+  document.getElementById('modal-peli-title').textContent = tipo==='conjunta'?'💑 Peli conjunta':'🎬 Peli vista';
+  document.getElementById('peli-tipo-hidden').value = tipo;
+  ['peli-titulo','peli-anyo','peli-nota'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('peli-fecha').value = hoyStr();
+  openModal('modal-peli');
+}
+
+function guardarPeli() {
+  const titulo = document.getElementById('peli-titulo').value.trim();
+  if(!titulo){alert('Indica el título');return;}
+  const anyo   = document.getElementById('peli-anyo').value;
+  const nota   = document.getElementById('peli-nota').value.trim();
+  const fecha  = document.getElementById('peli-fecha').value||hoyStr();
+  const tipo   = document.getElementById('peli-tipo-hidden').value;
+  const entry  = {titulo,anyo,nota,fecha,tipo};
+
+  const log=getPelisLog(); log.unshift(entry); DB.set('pelis-log',log);
+
+  const sw=semanaKey(new Date(fecha+'T12:00:00'));
+  const sd=getPelisSem(); if(!sd[sw])sd[sw]=[]; sd[sw].push(entry); DB.set('pelis-sem',sd);
+
+  if(tipo==='conjunta') {
+    const mk=mesKey(new Date(fecha+'T12:00:00'));
+    const md=getPelisMes(); if(!md[mk])md[mk]=[]; md[mk].push(entry); DB.set('pelis-mes',md);
+  }
+  closeModal('modal-peli'); renderPelis();
+}
+
+function setPelisSubFiltro(v,btn) {
+  pelisTipoFiltro=v;
+  document.querySelectorAll('#pftab-todas,#pftab-conjuntas').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderPelisHistorial();
+}
+function setPelisAnyoFiltro(v,btn) {
+  pelisAnyoFiltro=v;
+  document.querySelectorAll('#pelis-anyo-tabs .ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderPelisHistorial();
+}
+
+function renderPelisHistorial() {
+  let log=getPelisLog();
+  if(pelisTipoFiltro==='conjuntas') log=log.filter(p=>p.tipo==='conjunta');
+  if(pelisAnyoFiltro!=='todos') log=log.filter(p=>yearOf(p.fecha)===pelisAnyoFiltro);
+  const cont=document.getElementById('pelis-historial');
+  if(!log.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>Sin películas en este período</div>';return;}
+  cont.innerHTML=log.map(p=>`
+    <div class="history-item">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
+        <div class="history-date">${fechaCorta(p.fecha)}${p.nota?' · '+p.nota:''}</div>
+      </div>
+      <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin-left:6px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
+    </div>`).join('');
+}
+
+function renderPelis() {
+  const sw=semanaKey(now),mk=mesKey(now);
+  const sem=(getPelisSem()[sw]||[]).length;
+  const mes=(getPelisMes()[mk]||[]).length;
+  const log=getPelisLog();
+  const anyo=String(now.getFullYear());
+  const countAnyo=log.filter(p=>yearOf(p.fecha)===anyo).length;
+  const countTotal=log.length;
+
+  document.getElementById('peli-count-anyo').textContent=countAnyo;
+  document.getElementById('peli-count-anyo-lbl').textContent='en '+anyo;
+  document.getElementById('peli-count-total').textContent=countTotal;
+
+  document.getElementById('peli-sem-sub').textContent='Semana '+numSemana(now);
+  document.getElementById('peli-mes-sub').textContent=MESES[now.getMonth()];
+  document.getElementById('peli-sem-bar').style.width=Math.min(100,sem*100)+'%';
+  document.getElementById('peli-mes-bar').style.width=Math.min(100,mes*100)+'%';
+  document.getElementById('peli-sem-bar').classList.toggle('done',sem>=1);
+  document.getElementById('peli-mes-bar').classList.toggle('done',mes>=1);
+  document.getElementById('peli-sem-count').textContent=sem+' de 1';
+  document.getElementById('peli-mes-count').textContent=mes+' de 1';
+  document.getElementById('peli-sem-chip').innerHTML=chip(sem>=1,'¡Cumplido!','Pendiente');
+  document.getElementById('peli-mes-chip').innerHTML=chip(mes>=1,'¡Cumplido!','Pendiente');
+  buildAnyoTabs('pelis-anyo-tabs',getYearsFrom(getPelisLog()),'pelisAnyoFiltro','setPelisAnyoFiltro');
+  renderPelisHistorial();
+}
+
+// ══════════════════════════════════════
+// LECTURA
+// ══════════════════════════════════════
+let librosAnyoFiltro = 'todos';
+let librosTipoFiltro = 'todos';
+
+function getLibrosMes()   { return DB.get('libros-mes')||{}; }
+function getBiblioteca()  { return DB.get('libros-biblioteca')||[]; }
+
+function abrirModalLibroLeido() {
+  ['libro-titulo','libro-autor'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('libro-fecha').value=hoyStr();
+  document.querySelectorAll('.fmt-btn').forEach(b=>b.classList.remove('sel'));
+  // selector físicos disponibles
+  const bib=getBiblioteca().filter(b=>!b.leido);
+  const wrap=document.getElementById('fisicos-disponibles-wrap');
+  const lista=document.getElementById('lista-fisicos-sel');
+  if(bib.length>0) {
+    wrap.style.display='block';
+    lista.innerHTML=bib.map(b=>`<div class="sel-item" onclick="selFisico(this,'${b.titulo.replace(/'/g,"\\'")}')">📗 ${b.titulo}${b.autor?' — <span style=\'color:var(--text3)\'>'+b.autor+'</span>':''}</div>`).join('');
+  } else { wrap.style.display='none'; }
+  openModal('modal-libro-leido');
+}
+function selFisico(el,titulo) {
+  document.querySelectorAll('#lista-fisicos-sel .sel-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('libro-titulo').value=titulo;
+  // Auto-seleccionar formato físico
+  document.querySelectorAll('.fmt-btn').forEach(b=>{ if(b.dataset.fmt==='fisico') b.classList.add('sel'); });
+}
+
+function guardarLibroLeido() {
+  const titulo=document.getElementById('libro-titulo').value.trim();
+  if(!titulo){alert('Indica el título del libro');return;}
+  const autor=document.getElementById('libro-autor').value.trim();
+  const fecha=document.getElementById('libro-fecha').value||hoyStr();
+  const formatos=[...document.querySelectorAll('.fmt-btn.sel')].map(b=>b.dataset.fmt);
+  const mk=mesKey(new Date(fecha+'T12:00:00'));
+  const lm=getLibrosMes(); if(!lm[mk])lm[mk]=[];
+  lm[mk].push({titulo,autor,fecha,formatos}); DB.set('libros-mes',lm);
+
+  // marcar físico como leído si aplica
+  if(formatos.includes('fisico')) {
+    const bib=getBiblioteca();
+    const idx=bib.findIndex(b=>b.titulo.toLowerCase()===titulo.toLowerCase()&&!b.leido);
+    if(idx>=0){bib[idx].leido=true;bib[idx].fechaLeido=fecha;DB.set('libros-biblioteca',bib);}
+  }
+  closeModal('modal-libro-leido'); renderLectura();
+}
+
+function toggleFisicoFecha(cb) {
+  document.getElementById('fisico-fecha-group').style.opacity = cb.checked ? '0.4' : '1';
+  document.getElementById('fisico-fecha').disabled = cb.checked;
+}
+
+function abrirModalFisicoNuevo() {
+  ['fisico-titulo','fisico-autor'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fisico-fecha').value=hoyStr();
+  document.getElementById('fisico-fecha').disabled=false;
+  document.getElementById('fisico-fecha-group').style.opacity='1';
+  document.getElementById('fisico-sin-fecha').checked=false;
+  openModal('modal-libro-fisico-nuevo');
+}
+function guardarLibroFisicoNuevo() {
+  const titulo=document.getElementById('fisico-titulo').value.trim();
+  if(!titulo){alert('Indica el título');return;}
+  const autor=document.getElementById('fisico-autor').value.trim();
+  const sinFecha=document.getElementById('fisico-sin-fecha').checked;
+  const fecha=sinFecha ? null : (document.getElementById('fisico-fecha').value||hoyStr());
+  const bib=getBiblioteca();
+  bib.push({id:Date.now(),titulo,autor,fechaAdq:fecha,leido:false,fechaLeido:null});
+  DB.set('libros-biblioteca',bib);
+  closeModal('modal-libro-fisico-nuevo'); renderLectura();
+}
+
+function setLibrosFiltroTipo(v,btn) {
+  librosTipoFiltro=v;
+  document.querySelectorAll('#lftab-todos,#lftab-leidos,#lftab-fisicos').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderLecturaHistorial();
+}
+function setLibrosAnyoFiltro(v,btn) {
+  librosAnyoFiltro=v;
+  document.querySelectorAll('#libros-anyo-tabs .ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderLecturaHistorial();
+}
+
+function renderLecturaHistorial() {
+  const hist=document.getElementById('lectura-historial');
+  const fmtIcons={fisico:'📗',digital:'📱',audio:'🎧'};
+  let todosMes=Object.values(getLibrosMes()).flat();
+  const bib=getBiblioteca();
+
+  if(librosTipoFiltro==='fisicos') {
+    let arr=[...bib];
+    if(librosAnyoFiltro!=='todos') arr=arr.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
+    if(!arr.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📖</div>Sin libros físicos en este período</div>';return;}
+    hist.innerHTML=arr.map(b=>`
+      <div class="libro-entry">
+        <div class="libro-entry-title">${b.titulo}</div>
+        <div class="libro-entry-meta">
+          ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
+          <span class="chip ${b.leido?'chip-done':'chip-pending'}" style="font-size:10px">${b.leido?'✓ Leído':'○ Pendiente'}</span>
+          <span style="font-size:10px;color:var(--text3)">adq. ${fechaCorta(b.fechaAdq)}</span>
+        </div>
+      </div>`).join('');
+    return;
+  }
+
+  if(librosTipoFiltro==='leidos') {
+    if(librosAnyoFiltro!=='todos') todosMes=todosMes.filter(l=>yearOf(l.fecha)===librosAnyoFiltro);
+    todosMes.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    if(!todosMes.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin libros leídos en este período</div>';return;}
+    hist.innerHTML=todosMes.map(l=>{
+      const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
+      return `<div class="libro-entry">
+        <div class="libro-entry-title">${l.titulo}</div>
+        <div class="libro-entry-meta">
+          ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
+          ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+        </div>
+      </div>`;}).join('');
+    return;
+  }
+
+  // Todos
+  let leidos=[...todosMes], pendientes=bib.filter(b=>!b.leido);
+  if(librosAnyoFiltro!=='todos') {
+    leidos=leidos.filter(l=>yearOf(l.fecha)===librosAnyoFiltro);
+    pendientes=pendientes.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
+  }
+  leidos.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+
+  if(!leidos.length&&!pendientes.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin registros en este período</div>';return;}
+
+  const leidosHtml=leidos.map(l=>{
+    const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
+    return `<div class="libro-entry">
+      <div class="libro-entry-title">${l.titulo}</div>
+      <div class="libro-entry-meta">
+        <span class="chip chip-done" style="font-size:10px">✓ Leído</span>
+        ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+      </div>
+    </div>`;}).join('');
+
+  const pendHtml=pendientes.length?`
+    <div style="font-size:11px;color:var(--text3);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px">Físicos pendientes (${pendientes.length})</div>
+    ${pendientes.map(b=>`<div class="libro-entry">
+      <div class="libro-entry-title">${b.titulo}</div>
+      <div class="libro-entry-meta">
+        ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
+        <span class="chip chip-pending" style="font-size:10px">○ Pendiente</span>
+      </div>
+    </div>`).join('')}`:'';
+
+  hist.innerHTML=leidosHtml+pendHtml;
+}
+
+function renderLectura() {
+  const mk=mesKey(now);
+  const libMes=(getLibrosMes()[mk]||[]).length;
+  const bib=getBiblioteca();
+  const anyo=String(now.getFullYear());
+
+  // Global: todos los pendientes sin importar año
+  const bibPendTotal=bib.filter(b=>!b.leido).length;
+  const pEl=document.getElementById('bib-pend-val');
+  pEl.textContent=bibPendTotal;
+  pEl.style.color=bibPendTotal>0?'var(--red)':'var(--green)';
+
+  // Anuales: leídos este año (fechaLeido en este año), pendientes comprados este año sin leer, comprados este año
+  const bibCompradosAnyo=bib.filter(b=>b.fechaAdq&&yearOf(b.fechaAdq)===anyo).length;
+  const bibLeidosAnyo=bib.filter(b=>b.leido&&b.fechaLeido&&yearOf(b.fechaLeido)===anyo).length;
+  const bibPendAnyo=bib.filter(b=>!b.leido&&b.fechaAdq&&yearOf(b.fechaAdq)===anyo).length;
+
+  document.getElementById('bib-anyo-label').textContent=`En ${anyo}`;
+  document.getElementById('bib-leidos-val').textContent=bibLeidosAnyo;
+  document.getElementById('bib-pendanyo-val').textContent=bibPendAnyo;
+  document.getElementById('bib-comprados-val').textContent=bibCompradosAnyo;
+
+  document.getElementById('libro-mes-sub').textContent=MESES[now.getMonth()];
+  document.getElementById('libro-mes-bar').style.width=Math.min(100,libMes*100)+'%';
+  document.getElementById('libro-mes-bar').classList.toggle('done',libMes>=1);
+  document.getElementById('libro-mes-count').textContent=libMes+' de 1';
+  document.getElementById('libro-mes-chip').innerHTML=chip(libMes>=1,'¡Cumplido!','Pendiente');
+
+  const allLeidos=Object.values(getLibrosMes()).flat();
+  buildAnyoTabs('libros-anyo-tabs',getYearsFrom(allLeidos),'librosAnyoFiltro','setLibrosAnyoFiltro');
+  renderLecturaHistorial();
+}
+
+// ══════════════════════════════════════
+// CURSOS
+// ══════════════════════════════════════
+function getCursos() { return DB.get('cursos')||[]; }
+
+function guardarNuevoCurso() {
+  const nombre=document.getElementById('curso-nombre').value.trim();
+  const total=parseInt(document.getElementById('curso-total').value);
+  if(!nombre||!total||total<1) return;
+  const cursos=getCursos();
+  cursos.push({id:Date.now(),nombre,total,vistos:0,log:[]});
+  DB.set('cursos',cursos);
+  document.getElementById('curso-nombre').value='';
+  document.getElementById('curso-total').value='';
+  closeModal('modal-nuevo-curso'); renderCursos();
+}
+let cursoModoActual = 'anyadir';
+function setCursoModo(modo, btn) {
+  cursoModoActual = modo;
+  document.querySelectorAll('#curso-videos-modo-wrap .ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cv-group-anyadir').style.display = modo==='anyadir' ? '' : 'none';
+  document.getElementById('cv-group-hasta').style.display  = modo==='hasta'   ? '' : 'none';
+}
+
+function openAddVideos(id) {
+  const c=getCursos().find(x=>x.id===id);
+  document.getElementById('modal-videos-titulo').textContent=c.nombre;
+  document.getElementById('curso-videos-id').value=id;
+  document.getElementById('curso-videos-hoy').value='';
+  document.getElementById('curso-videos-hasta').value='';
+  document.getElementById('curso-videos-fecha').value=hoyStr();
+  document.getElementById('cv-hasta-label').textContent=`He llegado hasta el vídeo nº (ya llevas ${c.vistos})`;
+  document.getElementById('cv-hasta-info').textContent=`El curso tiene ${c.total} vídeos en total`;
+  // reset modo
+  cursoModoActual='anyadir';
+  document.querySelectorAll('#curso-videos-modo-wrap .ftab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('cvmodo-anyadir').classList.add('active');
+  document.getElementById('cv-group-anyadir').style.display='';
+  document.getElementById('cv-group-hasta').style.display='none';
+  openModal('modal-videos-curso');
+}
+
+function guardarVideosCurso() {
+  const id=parseInt(document.getElementById('curso-videos-id').value);
+  const fecha=document.getElementById('curso-videos-fecha').value||hoyStr();
+  const cursos=getCursos(); const c=cursos.find(x=>x.id===id); if(!c) return;
+  if(!c.log) c.log=[];
+
+  let nuevosVistos;
+  if(cursoModoActual==='hasta') {
+    const hasta=parseInt(document.getElementById('curso-videos-hasta').value);
+    if(!hasta||hasta<1){alert('Indica hasta qué vídeo has llegado');return;}
+    if(hasta<=c.vistos){alert(`Ya tienes ${c.vistos} vídeos marcados. Indica un número mayor.`);return;}
+    const n=hasta-c.vistos;
+    nuevosVistos=Math.min(c.total,hasta);
+    c.log.push({n,hasta,fecha});
+  } else {
+    const n=parseInt(document.getElementById('curso-videos-hoy').value);
+    if(!n||n<1) return;
+    nuevosVistos=Math.min(c.total,c.vistos+n);
+    c.log.push({n,fecha});
+  }
+
+  c.vistos=nuevosVistos;
+  DB.set('cursos',cursos);
+  closeModal('modal-videos-curso'); renderCursos();
+}
+function eliminarCurso(id) {
+  if(!confirm('¿Eliminar este curso?')) return;
+  DB.set('cursos',getCursos().filter(c=>c.id!==id)); renderCursos();
+}
+function renderCursos() {
+  const cursos=getCursos(); const cont=document.getElementById('cursos-lista');
+  if(!cursos.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🎓</div>Añade tu primer curso</div>';return;}
+  cont.innerHTML=cursos.map(c=>{
+    const pct=Math.round((c.vistos/c.total)*100),done=c.vistos>=c.total;
+    return `<div class="card">
+      <div class="card-header">
+        <div style="flex:1"><div class="card-title">${c.nombre}</div><div class="card-subtitle">${c.vistos} de ${c.total} vídeos (${pct}%)</div></div>
+        <button class="btn-del" onclick="eliminarCurso(${c.id})">✕</button>
+      </div>
+      <div class="progress-bar"><div class="progress-fill${done?' done':''}" style="width:${pct}%"></div></div>
+      ${done?`<span class="chip chip-done" style="margin-top:7px;display:inline-flex">🎉 Completado</span>`
+            :`<div class="curso-actions"><button class="btn btn-check btn-sm" onclick="openAddVideos(${c.id})">+ Añadir vídeos vistos</button></div>`}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// CUERPO
+// ══════════════════════════════════════
+function getMedidas() { return DB.get('medidas')||[]; }
+function guardarMedidas() {
+  const peso=document.getElementById('med-peso').value;
+  const cintura=document.getElementById('med-cintura').value;
+  const cadera=document.getElementById('med-cadera').value;
+  const pecho=document.getElementById('med-pecho').value;
+  const nota=document.getElementById('med-nota').value;
+  if(!peso&&!cintura){alert('Introduce al menos el peso o la cintura');return;}
+  const data=getMedidas();
+  data.unshift({fecha:hoyStr(),peso:peso||null,cintura:cintura||null,cadera:cadera||null,pecho:pecho||null,nota:nota||null,semana:numSemana(now)});
+  DB.set('medidas',data);
+  ['med-peso','med-cintura','med-cadera','med-pecho','med-nota'].forEach(id=>document.getElementById(id).value='');
+  closeModal('modal-medidas'); renderCuerpo();
+}
+function renderCuerpo() {
+  const datos=getMedidas(); const hist=document.getElementById('medidas-historial');
+  if(!datos.length){hist.innerHTML='<div class="empty" style="padding:16px 0"><div class="empty-icon">⚖️</div>Sin registros aún</div>';return;}
+  hist.innerHTML=`<table class="medidas-table">
+    <tr><th>Fecha</th><th>Peso</th><th>Cintura</th><th>Cadera</th><th>Pecho</th></tr>
+    ${datos.map(m=>`
+      <tr>
+        <td style="font-size:11px">${fechaCorta(m.fecha)}</td>
+        <td>${m.peso?m.peso+' kg':'—'}</td>
+        <td>${m.cintura?m.cintura+' cm':'—'}</td>
+        <td>${m.cadera?m.cadera+' cm':'—'}</td>
+        <td>${m.pecho?m.pecho+' cm':'—'}</td>
+      </tr>
+      ${m.nota?`<tr><td colspan="5" style="font-size:10px;color:var(--text3);padding-top:0;padding-bottom:5px">📝 ${m.nota}</td></tr>`:''}`).join('')}
+  </table>`;
+}
+
+// ══════════════════════════════════════
+// DEPORTE
+// ══════════════════════════════════════
+let deporteAnyoFiltro = 'todos';
+
+function getDeporteSem() { return DB.get('deporte-sem')||{}; }
+function getDeporteLog()  { return DB.get('deporte-log')||[]; }
+
+function abrirModalDeporte() {
+  ['dep-actividad','dep-duracion','dep-nota'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('dep-fecha').value=hoyStr();
+  document.getElementById('dep-intensidad').value='Moderada';
+  openModal('modal-deporte');
+}
+function guardarDeporte() {
+  const actividad=document.getElementById('dep-actividad').value.trim()||'Deporte';
+  const duracion=document.getElementById('dep-duracion').value;
+  const intensidad=document.getElementById('dep-intensidad').value;
+  const nota=document.getElementById('dep-nota').value.trim();
+  const fecha=document.getElementById('dep-fecha').value||hoyStr();
+
+  const sw=semanaKey(new Date(fecha+'T12:00:00'));
+  const sd=getDeporteSem(); if(!sd[sw])sd[sw]=[];
+  sd[sw].push({actividad,duracion,intensidad,nota,fecha}); DB.set('deporte-sem',sd);
+
+  const log=getDeporteLog();
+  log.unshift({actividad,duracion,intensidad,nota,fecha});
+  log.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  DB.set('deporte-log',log);
+  closeModal('modal-deporte'); renderDeporte();
+}
+
+function setDeporteAnyoFiltro(v,btn) {
+  deporteAnyoFiltro=v;
+  document.querySelectorAll('#deporte-anyo-tabs .ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderDeporteHistorial();
+}
+function renderDeporteHistorial() {
+  let log=getDeporteLog();
+  if(deporteAnyoFiltro!=='todos') log=log.filter(s=>yearOf(s.fecha)===deporteAnyoFiltro);
+  const hist=document.getElementById('deporte-historial');
+  if(!log.length){hist.innerHTML='<div class="empty"><div class="empty-icon">🏃</div>Sin sesiones en este período</div>';return;}
+  hist.innerHTML=log.map(s=>`
+    <div class="sport-entry">
+      <div class="sport-entry-type">${s.actividad}</div>
+      <div class="sport-entry-detail">${fechaCorta(s.fecha)}${s.duracion?' · '+s.duracion+' min':''}${s.intensidad?' · '+s.intensidad:''}${s.nota?' · '+s.nota:''}</div>
+    </div>`).join('');
+}
+function renderDeporte() {
+  const sw=semanaKey(now); const semData=getDeporteSem()[sw]||[];
+  const diasUnicos=[...new Set(semData.map(s=>s.fecha))];
+  const count=diasUnicos.length, pct=Math.min(100,(count/3)*100);
+  document.getElementById('deporte-sem-sub').textContent='Semana '+numSemana(now);
+  const bar=document.getElementById('deporte-bar');
+  bar.style.width=pct+'%'; bar.classList.toggle('done',count>=3);
+  document.getElementById('deporte-count').textContent=count+' de 3 días';
+  document.getElementById('deporte-chip').innerHTML=chip(count>=3,'¡Meta cumplida!',count+'/3 días');
+
+  const grid=document.getElementById('deporte-week-grid');
+  const monday=new Date(now); monday.setDate(now.getDate()-((now.getDay()+6)%7));
+  grid.innerHTML=Array.from({length:7},(_,i)=>{
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const ds=d.toISOString().slice(0,10);
+    const has=semData.some(s=>s.fecha===ds), isToday=ds===hoyStr();
+    return `<button class="day-btn${has?' done':isToday?' today':''}">${['L','M','X','J','V','S','D'][i]}<div class="dot"></div></button>`;
+  }).join('');
+
+  buildAnyoTabs('deporte-anyo-tabs',getYearsFrom(getDeporteLog()),'deporteAnyoFiltro','setDeporteAnyoFiltro');
+  renderDeporteHistorial();
+}
+
+// ══════════════════════════════════════
+// RESUMEN
+// ══════════════════════════════════════
+function renderResumen() {
+  const sw=semanaKey(now),mk=mesKey(now);
+  const peliSem=(getPelisSem()[sw]||[]).length>=1;
+  const peliMes=(getPelisMes()[mk]||[]).length>=1;
+  const libroMes=(getLibrosMes()[mk]||[]).length>=1;
+  const depData=getDeporteSem()[sw]||[];
+  const depDias=[...new Set(depData.map(s=>s.fecha))].length;
+  const cs=getCursos();
+
+  // Días de trabajo en cursos esta semana (días únicos con log en la semana actual)
+  const cursoDiasSem=(() => {
+    const cursosActivos=cs.filter(c=>c.vistos<c.total);
+    if(!cursosActivos.length) return 0;
+    // calcular fechas de esta semana con actividad en cualquier curso
+    const monday=new Date(now); monday.setDate(now.getDate()-((now.getDay()+6)%7));
+    const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+    const monStr=monday.toISOString().slice(0,10);
+    const sunStr=sunday.toISOString().slice(0,10);
+    const dias=new Set();
+    cursosActivos.forEach(c=>(c.log||[]).forEach(e=>{ if(e.fecha>=monStr&&e.fecha<=sunStr) dias.add(e.fecha); }));
+    return dias.size;
+  })();
+  const cursosComp=cs.filter(c=>c.vistos>=c.total).length;
+
+  document.getElementById('resumen-stats').innerHTML=[
+    {val:depDias+'/3',lbl:'Deporte sem.'},
+    {val:(getPelisSem()[sw]||[]).length+'/1',lbl:'Pelis sem.'},
+    {val:(getLibrosMes()[mk]||[]).length+'/1',lbl:'Libros mes'},
+    {val:cursoDiasSem+'/3',lbl:'Curso sem.'},
+  ].map(s=>`<div class="stat-mini"><div class="stat-mini-val">${s.val}</div><div class="stat-mini-lbl">${s.lbl}</div></div>`).join('');
+
+  document.getElementById('resumen-cards').innerHTML=[
+    {icon:'🎬',txt:'Peli semanal',ok:peliSem},
+    {icon:'💑',txt:'Peli conjunta mensual',ok:peliMes},
+    {icon:'📚',txt:'Libro del mes',ok:libroMes},
+    {icon:'🏃',txt:`Deporte (${depDias}/3 días)`,ok:depDias>=3},
+    ...(cs.filter(c=>c.vistos<c.total).length?[{icon:'🎓',txt:`Curso (${cursoDiasSem}/3 días esta semana)`,ok:cursoDiasSem>=3}]:[]),
+  ].map(c=>`<div class="card" style="padding:11px 13px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <span style="font-size:20px">${c.icon}</span>
+      <span style="font-size:13px;font-weight:500;flex:1">${c.txt}</span>
+      <span class="chip ${c.ok?'chip-done':'chip-pending'}">${c.ok?'✓':'○'}</span>
+    </div>
+  </div>`).join('');
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+renderResumen(); renderPelis(); renderLectura(); renderCursos(); renderCuerpo(); renderDeporte();
+</script>
+</body>
+</html>
