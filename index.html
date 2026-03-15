@@ -153,6 +153,16 @@
   <div class="section-title">Esta semana</div>
   <div class="resumen-grid" id="resumen-stats"></div>
   <div id="resumen-cards"></div>
+
+  <div class="section-title" style="margin-top:24px">Copia de seguridad</div>
+  <div class="card" style="padding:12px 14px">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">Exporta tus datos antes de limpiar la caché del navegador. Importa para restaurarlos después.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" style="flex:1;border-color:var(--border2);color:var(--accent3)" onclick="exportarDatos()">⬇ Exportar datos</button>
+      <button class="btn btn-secondary btn-sm" style="flex:1;border-color:rgba(74,222,128,.3);color:var(--green)" onclick="document.getElementById('import-file').click()">⬆ Importar datos</button>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDatos(this)">
+  </div>
 </div>
 
 <!-- PELIS -->
@@ -1627,6 +1637,46 @@ function renderResumen() {
       <span class="chip ${c.ok?'chip-done':'chip-pending'}">${c.ok?'✓':'○'}</span>
     </div>
   </div>`).join('');
+}
+
+// ══════════════════════════════════════
+// EXPORTAR / IMPORTAR
+// ══════════════════════════════════════
+const DB_KEYS = ['pelis-log','pelis-sem','pelis-mes','libros-mes','libros-biblioteca','cursos','medidas','deporte-log','deporte-sem'];
+
+function exportarDatos() {
+  const backup = {};
+  DB_KEYS.forEach(k => { const v = DB.get(k); if(v !== null) backup[k] = v; });
+  backup._exportado = new Date().toISOString();
+  backup._version = '1';
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const fecha = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `mis-propositos-backup-${fecha}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importarDatos(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data._version) { alert('Fichero no válido o no es un backup de esta app.'); return; }
+      if(!confirm(`¿Importar backup del ${data._exportado ? data._exportado.slice(0,10) : 'fecha desconocida'}?\n\nEsto reemplazará todos los datos actuales.`)) return;
+      DB_KEYS.forEach(k => { if(data[k] !== undefined) DB.set(k, data[k]); });
+      alert('✅ Datos importados correctamente.');
+      renderResumen(); renderPelis(); renderLectura(); renderCursos(); renderCuerpo(); renderDeporte();
+    } catch(err) {
+      alert('Error al leer el fichero. Asegúrate de que es un backup válido.');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
 }
 
 // ══════════════════════════════════════
