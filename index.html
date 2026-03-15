@@ -7,8 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Mis Propósitos</title>
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="manifest" href="manifest.json">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
   :root {
@@ -126,6 +124,14 @@
   .curso-actions { margin-top:9px; }
   .empty { text-align:center; padding:28px 16px; color:var(--text3); font-size:13px; }
   .empty-icon { font-size:32px; margin-bottom:7px; }
+  .action-sheet { background:var(--bg2); border:1px solid var(--border); border-radius:22px 22px 0 0; padding:18px 18px 34px; width:100%; max-width:480px; animation:slideUp .28s ease; }
+  .action-sheet-title { font-size:12px; font-weight:500; color:var(--text3); margin-bottom:14px; text-align:center; line-height:1.4; }
+  .action-btn { display:flex; align-items:center; gap:12px; width:100%; padding:13px 4px; background:none; border:none; border-bottom:1px solid rgba(255,255,255,.04); font-size:14px; font-family:'DM Sans',sans-serif; color:var(--text); cursor:pointer; text-align:left; }
+  .action-btn:last-child { border-bottom:none; }
+  .action-btn.danger { color:var(--red); }
+  .action-btn-icon { font-size:18px; width:26px; text-align:center; flex-shrink:0; }
+  .longpress { user-select:none; -webkit-user-select:none; }
+  .hint-row { font-size:10px; color:var(--text3); text-align:right; margin-bottom:4px; margin-top:-6px; }
 </style>
 </head>
 <body>
@@ -450,6 +456,127 @@
   </div>
 </div>
 
+<!-- ACTION SHEET (menú mantener pulsado) -->
+<div class="modal-overlay" id="modal-action-sheet">
+  <div class="action-sheet">
+    <div class="action-sheet-title" id="as-title"></div>
+    <div id="as-buttons"></div>
+  </div>
+</div>
+
+<!-- Modal editar peli -->
+<div class="modal-overlay" id="modal-edit-peli">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar película</div>
+    <div class="form-group"><label class="input-label">Título</label><input class="input" id="edit-peli-titulo" placeholder="Título..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Año</label><input class="input" id="edit-peli-anyo" type="number" min="1900" max="2100"></div>
+      <div class="form-group"><label class="input-label">Fecha vista</label><input class="input" id="edit-peli-fecha" type="date"></div>
+    </div>
+    <div class="form-group"><label class="input-label">Nota</label><input class="input" id="edit-peli-nota" placeholder="¿Qué te pareció?"></div>
+    <div class="form-group">
+      <label class="input-label">Tipo</label>
+      <select class="input" id="edit-peli-tipo">
+        <option value="semanal">🎬 Semanal</option>
+        <option value="conjunta">💑 Conjunta</option>
+      </select>
+    </div>
+    <input type="hidden" id="edit-peli-idx">
+    <button class="btn btn-primary" onclick="guardarEditPeli()">Guardar cambios</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-edit-peli')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal editar libro leído -->
+<div class="modal-overlay" id="modal-edit-libro">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar libro leído</div>
+    <div class="form-group"><label class="input-label">Título</label><input class="input" id="edit-libro-titulo" placeholder="Título..."></div>
+    <div class="form-group"><label class="input-label">Autor</label><input class="input" id="edit-libro-autor" placeholder="Autor..."></div>
+    <div class="form-group"><label class="input-label">Fecha de fin</label><input class="input" id="edit-libro-fecha" type="date"></div>
+    <div class="form-group">
+      <label class="input-label">Formato</label>
+      <div class="format-toggles" id="edit-libro-formatos">
+        <button class="fmt-btn" data-fmt="fisico" onclick="this.classList.toggle('sel')">📗 Físico</button>
+        <button class="fmt-btn" data-fmt="digital" onclick="this.classList.toggle('sel')">📱 Digital</button>
+        <button class="fmt-btn" data-fmt="audio" onclick="this.classList.toggle('sel')">🎧 Audiolibro</button>
+      </div>
+    </div>
+    <input type="hidden" id="edit-libro-mk">
+    <input type="hidden" id="edit-libro-idx">
+    <button class="btn btn-primary" onclick="guardarEditLibro()">Guardar cambios</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-edit-libro')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal editar libro físico -->
+<div class="modal-overlay" id="modal-edit-fisico">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar libro físico</div>
+    <div class="form-group"><label class="input-label">Título</label><input class="input" id="edit-fisico-titulo" placeholder="Título..."></div>
+    <div class="form-group"><label class="input-label">Autor</label><input class="input" id="edit-fisico-autor" placeholder="Autor..."></div>
+    <div class="form-group" id="edit-fisico-fecha-group">
+      <label class="input-label">Fecha de compra</label>
+      <input class="input" id="edit-fisico-fecha" type="date">
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;margin-top:-4px">
+      <input type="checkbox" id="edit-fisico-sin-fecha" onchange="document.getElementById('edit-fisico-fecha-group').style.opacity=this.checked?'0.4':'1';document.getElementById('edit-fisico-fecha').disabled=this.checked" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+      <label for="edit-fisico-sin-fecha" style="font-size:12px;color:var(--text3);cursor:pointer">Sin fecha de compra</label>
+    </div>
+    <input type="hidden" id="edit-fisico-id">
+    <button class="btn btn-primary" onclick="guardarEditFisico()">Guardar cambios</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-edit-fisico')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal editar deporte -->
+<div class="modal-overlay" id="modal-edit-deporte">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar sesión</div>
+    <div class="form-group"><label class="input-label">Actividad</label><input class="input" id="edit-dep-actividad" placeholder="Actividad..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Duración (min)</label><input class="input" id="edit-dep-duracion" type="number" min="1"></div>
+      <div class="form-group">
+        <label class="input-label">Intensidad</label>
+        <select class="input" id="edit-dep-intensidad">
+          <option value="Suave">🟢 Suave</option>
+          <option value="Moderada">🟡 Moderada</option>
+          <option value="Intensa">🔴 Intensa</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="input-label">Fecha</label><input class="input" id="edit-dep-fecha" type="date"></div>
+    <div class="form-group"><label class="input-label">Nota</label><input class="input" id="edit-dep-nota" placeholder="Detalles..."></div>
+    <input type="hidden" id="edit-dep-idx">
+    <button class="btn btn-primary" onclick="guardarEditDeporte()">Guardar cambios</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-edit-deporte')">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal editar medida -->
+<div class="modal-overlay" id="modal-edit-medida">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar registro</div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Peso (kg)</label><input class="input" id="edit-med-peso" type="number" step="0.1"></div>
+      <div class="form-group"><label class="input-label">Cintura (cm)</label><input class="input" id="edit-med-cintura" type="number" step="0.5"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Cadera (cm)</label><input class="input" id="edit-med-cadera" type="number" step="0.5"></div>
+      <div class="form-group"><label class="input-label">Pecho (cm)</label><input class="input" id="edit-med-pecho" type="number" step="0.5"></div>
+    </div>
+    <div class="form-group"><label class="input-label">Nota</label><input class="input" id="edit-med-nota"></div>
+    <input type="hidden" id="edit-med-idx">
+    <button class="btn btn-primary" onclick="guardarEditMedida()">Guardar cambios</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-edit-medida')">Cancelar</button>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════
 // DB & UTILS
@@ -488,7 +615,268 @@ function buildAnyoTabs(contId, years, activeVar, onClickFn) {
 }
 
 // ══════════════════════════════════════
-// MIGRACIÓN DE DATOS (compatibilidad)
+// ACTION SHEET (mantener pulsado)
+// ══════════════════════════════════════
+function showActionSheet(title, buttons) {
+  document.getElementById('as-title').textContent = title;
+  document.getElementById('as-buttons').innerHTML = buttons.map(b =>
+    `<button class="action-btn${b.danger?' danger':''}" onclick="closeModal('modal-action-sheet');setTimeout(()=>{${b.fn}},120)">
+      <span class="action-btn-icon">${b.icon}</span>${b.label}
+    </button>`).join('');
+  openModal('modal-action-sheet');
+}
+
+function longpress(el, fn) {
+  let t;
+  el.addEventListener('touchstart', e=>{ t=setTimeout(()=>{ fn(); navigator.vibrate&&navigator.vibrate(30); },500); },{passive:true});
+  el.addEventListener('touchend', ()=>clearTimeout(t),{passive:true});
+  el.addEventListener('touchmove', ()=>clearTimeout(t),{passive:true});
+  el.addEventListener('contextmenu', e=>{ e.preventDefault(); fn(); });
+}
+
+// ── PELIS editar/eliminar ──────────────
+function peliActionSheet(idx) {
+  const log=getPelisLog(); const p=log[idx];
+  if(!p) return;
+  showActionSheet(`${p.titulo}${p.anyo?' ('+p.anyo+')':''}`, [
+    {icon:'✏️', label:'Editar', fn:`abrirEditPeli(${idx})`},
+    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarPeli(${idx})`},
+  ]);
+}
+function abrirEditPeli(idx) {
+  const p=getPelisLog()[idx];
+  document.getElementById('edit-peli-titulo').value=p.titulo||'';
+  document.getElementById('edit-peli-anyo').value=p.anyo||'';
+  document.getElementById('edit-peli-fecha').value=p.fecha||hoyStr();
+  document.getElementById('edit-peli-nota').value=p.nota||'';
+  document.getElementById('edit-peli-tipo').value=p.tipo||'semanal';
+  document.getElementById('edit-peli-idx').value=idx;
+  openModal('modal-edit-peli');
+}
+function guardarEditPeli() {
+  const idx=parseInt(document.getElementById('edit-peli-idx').value);
+  const log=getPelisLog();
+  const oldEntry=log[idx];
+  const newEntry={
+    titulo:document.getElementById('edit-peli-titulo').value.trim()||oldEntry.titulo,
+    anyo:document.getElementById('edit-peli-anyo').value,
+    fecha:document.getElementById('edit-peli-fecha').value||oldEntry.fecha,
+    nota:document.getElementById('edit-peli-nota').value.trim(),
+    tipo:document.getElementById('edit-peli-tipo').value,
+  };
+  log[idx]=newEntry; DB.set('pelis-log',log);
+  // reconstruir pelis-sem y pelis-mes desde log
+  reconstruirPelisSemMes();
+  closeModal('modal-edit-peli'); renderPelis();
+}
+function eliminarPeli(idx) {
+  const log=getPelisLog(); log.splice(idx,1); DB.set('pelis-log',log);
+  reconstruirPelisSemMes(); renderPelis();
+}
+function reconstruirPelisSemMes() {
+  const log=getPelisLog(); const sem={}, mes={};
+  log.forEach(p=>{
+    const sw=semanaKey(new Date(p.fecha+'T12:00:00'));
+    if(!sem[sw])sem[sw]=[]; sem[sw].push(p);
+    if(p.tipo==='conjunta'){
+      const mk=mesKey(new Date(p.fecha+'T12:00:00'));
+      if(!mes[mk])mes[mk]=[]; mes[mk].push(p);
+    }
+  });
+  DB.set('pelis-sem',sem); DB.set('pelis-mes',mes);
+}
+
+// ── LIBROS LEÍDOS editar/eliminar ──────
+function libroLeidoActionSheet(mk, idx) {
+  const lm=getLibrosMes(); const l=(lm[mk]||[])[idx];
+  if(!l) return;
+  showActionSheet(l.titulo, [
+    {icon:'✏️', label:'Editar', fn:`abrirEditLibro('${mk}',${idx})`},
+    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarLibroLeido('${mk}',${idx})`},
+  ]);
+}
+function abrirEditLibro(mk, idx) {
+  const l=getLibrosMes()[mk][idx];
+  document.getElementById('edit-libro-titulo').value=l.titulo||'';
+  document.getElementById('edit-libro-autor').value=l.autor||'';
+  document.getElementById('edit-libro-fecha').value=l.fecha||hoyStr();
+  document.querySelectorAll('#edit-libro-formatos .fmt-btn').forEach(b=>{
+    b.classList.toggle('sel',(l.formatos||[]).includes(b.dataset.fmt));
+  });
+  document.getElementById('edit-libro-mk').value=mk;
+  document.getElementById('edit-libro-idx').value=idx;
+  openModal('modal-edit-libro');
+}
+function guardarEditLibro() {
+  const mk=document.getElementById('edit-libro-mk').value;
+  const idx=parseInt(document.getElementById('edit-libro-idx').value);
+  const lm=getLibrosMes();
+  const formatos=[...document.querySelectorAll('#edit-libro-formatos .fmt-btn.sel')].map(b=>b.dataset.fmt);
+  const newFecha=document.getElementById('edit-libro-fecha').value||lm[mk][idx].fecha;
+  lm[mk][idx]={
+    titulo:document.getElementById('edit-libro-titulo').value.trim()||lm[mk][idx].titulo,
+    autor:document.getElementById('edit-libro-autor').value.trim(),
+    fecha:newFecha, formatos,
+  };
+  // si la fecha cambió de mes, mover al mes correcto
+  const newMk=mesKey(new Date(newFecha+'T12:00:00'));
+  if(newMk!==mk){
+    const entry=lm[mk].splice(idx,1)[0];
+    if(!lm[newMk])lm[newMk]=[];
+    lm[newMk].push(entry);
+  }
+  DB.set('libros-mes',lm);
+  closeModal('modal-edit-libro'); renderLectura();
+}
+function eliminarLibroLeido(mk, idx) {
+  const lm=getLibrosMes();
+  if(lm[mk]) lm[mk].splice(idx,1);
+  DB.set('libros-mes',lm); renderLectura();
+}
+
+// ── LIBROS FÍSICOS editar/eliminar ──────
+function fisicoActionSheet(id) {
+  const b=getBiblioteca().find(x=>x.id===id);
+  if(!b) return;
+  showActionSheet(b.titulo, [
+    {icon:'✏️', label:'Editar', fn:`abrirEditFisico(${id})`},
+    {icon:'🗑️', label:'Eliminar de biblioteca', danger:true, fn:`eliminarFisico(${id})`},
+  ]);
+}
+function abrirEditFisico(id) {
+  const b=getBiblioteca().find(x=>x.id===id);
+  document.getElementById('edit-fisico-titulo').value=b.titulo||'';
+  document.getElementById('edit-fisico-autor').value=b.autor||'';
+  const sinFecha=!b.fechaAdq;
+  document.getElementById('edit-fisico-sin-fecha').checked=sinFecha;
+  document.getElementById('edit-fisico-fecha').value=b.fechaAdq||hoyStr();
+  document.getElementById('edit-fisico-fecha').disabled=sinFecha;
+  document.getElementById('edit-fisico-fecha-group').style.opacity=sinFecha?'0.4':'1';
+  document.getElementById('edit-fisico-id').value=id;
+  openModal('modal-edit-fisico');
+}
+function guardarEditFisico() {
+  const id=parseInt(document.getElementById('edit-fisico-id').value);
+  const bib=getBiblioteca(); const idx=bib.findIndex(x=>x.id===id); if(idx<0) return;
+  const sinFecha=document.getElementById('edit-fisico-sin-fecha').checked;
+  bib[idx].titulo=document.getElementById('edit-fisico-titulo').value.trim()||bib[idx].titulo;
+  bib[idx].autor=document.getElementById('edit-fisico-autor').value.trim();
+  bib[idx].fechaAdq=sinFecha?null:(document.getElementById('edit-fisico-fecha').value||bib[idx].fechaAdq);
+  DB.set('libros-biblioteca',bib);
+  closeModal('modal-edit-fisico'); renderLectura();
+}
+function eliminarFisico(id) {
+  DB.set('libros-biblioteca',getBiblioteca().filter(x=>x.id!==id)); renderLectura();
+}
+
+// ── DEPORTE editar/eliminar ──────────────
+function deporteActionSheet(idx) {
+  const log=getDeporteLog(); const s=log[idx];
+  if(!s) return;
+  showActionSheet(`${s.actividad} · ${fechaCorta(s.fecha)}`, [
+    {icon:'✏️', label:'Editar', fn:`abrirEditDeporte(${idx})`},
+    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarDeporte(${idx})`},
+  ]);
+}
+function abrirEditDeporte(idx) {
+  const s=getDeporteLog()[idx];
+  document.getElementById('edit-dep-actividad').value=s.actividad||'';
+  document.getElementById('edit-dep-duracion').value=s.duracion||'';
+  document.getElementById('edit-dep-intensidad').value=s.intensidad||'Moderada';
+  document.getElementById('edit-dep-fecha').value=s.fecha||hoyStr();
+  document.getElementById('edit-dep-nota').value=s.nota||'';
+  document.getElementById('edit-dep-idx').value=idx;
+  openModal('modal-edit-deporte');
+}
+function guardarEditDeporte() {
+  const idx=parseInt(document.getElementById('edit-dep-idx').value);
+  const log=getDeporteLog();
+  const oldFecha=log[idx].fecha;
+  log[idx]={
+    actividad:document.getElementById('edit-dep-actividad').value.trim()||log[idx].actividad,
+    duracion:document.getElementById('edit-dep-duracion').value,
+    intensidad:document.getElementById('edit-dep-intensidad').value,
+    fecha:document.getElementById('edit-dep-fecha').value||oldFecha,
+    nota:document.getElementById('edit-dep-nota').value.trim(),
+  };
+  log.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  DB.set('deporte-log',log);
+  reconstruirDeporteSem();
+  closeModal('modal-edit-deporte'); renderDeporte();
+}
+function eliminarDeporte(idx) {
+  const log=getDeporteLog(); log.splice(idx,1); DB.set('deporte-log',log);
+  reconstruirDeporteSem(); renderDeporte();
+}
+function reconstruirDeporteSem() {
+  const log=getDeporteLog(); const sem={};
+  log.forEach(s=>{ const sw=semanaKey(new Date(s.fecha+'T12:00:00')); if(!sem[sw])sem[sw]=[]; sem[sw].push(s); });
+  DB.set('deporte-sem',sem);
+}
+
+// ── MEDIDAS editar/eliminar ──────────────
+function medidaActionSheet(idx) {
+  const m=getMedidas()[idx];
+  if(!m) return;
+  showActionSheet(`Registro del ${fechaCorta(m.fecha)}`, [
+    {icon:'✏️', label:'Editar', fn:`abrirEditMedida(${idx})`},
+    {icon:'🗑️', label:'Eliminar', danger:true, fn:`eliminarMedida(${idx})`},
+  ]);
+}
+function abrirEditMedida(idx) {
+  const m=getMedidas()[idx];
+  document.getElementById('edit-med-peso').value=m.peso||'';
+  document.getElementById('edit-med-cintura').value=m.cintura||'';
+  document.getElementById('edit-med-cadera').value=m.cadera||'';
+  document.getElementById('edit-med-pecho').value=m.pecho||'';
+  document.getElementById('edit-med-nota').value=m.nota||'';
+  document.getElementById('edit-med-idx').value=idx;
+  openModal('modal-edit-medida');
+}
+function guardarEditMedida() {
+  const idx=parseInt(document.getElementById('edit-med-idx').value);
+  const data=getMedidas();
+  data[idx].peso=document.getElementById('edit-med-peso').value||null;
+  data[idx].cintura=document.getElementById('edit-med-cintura').value||null;
+  data[idx].cadera=document.getElementById('edit-med-cadera').value||null;
+  data[idx].pecho=document.getElementById('edit-med-pecho').value||null;
+  data[idx].nota=document.getElementById('edit-med-nota').value||null;
+  DB.set('medidas',data);
+  closeModal('modal-edit-medida'); renderCuerpo();
+}
+function eliminarMedida(idx) {
+  const data=getMedidas(); data.splice(idx,1); DB.set('medidas',data); renderCuerpo();
+}
+
+// ── CURSOS: editar nombre/total ──────────
+function cursoEditActionSheet(id) {
+  showActionSheet('Opciones del curso', [
+    {icon:'✏️', label:'Editar nombre y total de vídeos', fn:`abrirEditCurso(${id})`},
+    {icon:'↩️', label:'Deshacer último progreso', fn:`deshacerProgresoCurso(${id})`},
+    {icon:'🗑️', label:'Eliminar curso', danger:true, fn:`eliminarCurso(${id})`},
+  ]);
+}
+function abrirEditCurso(id) {
+  const c=getCursos().find(x=>x.id===id);
+  const nuevoNombre=prompt('Nombre del curso:',c.nombre);
+  if(nuevoNombre===null) return;
+  const nuevoTotal=prompt('Total de vídeos:',c.total);
+  if(nuevoTotal===null) return;
+  const t=parseInt(nuevoTotal);
+  if(!t||t<1){alert('Total no válido');return;}
+  const cursos=getCursos(); const idx=cursos.findIndex(x=>x.id===id);
+  cursos[idx].nombre=nuevoNombre.trim()||cursos[idx].nombre;
+  cursos[idx].total=t;
+  cursos[idx].vistos=Math.min(cursos[idx].vistos,t);
+  DB.set('cursos',cursos); renderCursos();
+}
+function deshacerProgresoCurso(id) {
+  const cursos=getCursos(); const c=cursos.find(x=>x.id===id);
+  if(!c||!c.log||!c.log.length){alert('No hay progreso que deshacer');return;}
+  const ultimo=c.log.pop();
+  c.vistos=Math.max(0,c.vistos-(ultimo.n||0));
+  DB.set('cursos',cursos); renderCursos();
+}
 // ══════════════════════════════════════
 (function migrar() {
   // pelis-log: garantizar campos mínimos
@@ -597,14 +985,23 @@ function renderPelisHistorial() {
   if(pelisAnyoFiltro!=='todos') log=log.filter(p=>yearOf(p.fecha)===pelisAnyoFiltro);
   const cont=document.getElementById('pelis-historial');
   if(!log.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>Sin películas en este período</div>';return;}
-  cont.innerHTML=log.map(p=>`
-    <div class="history-item">
+  // map with original indices from full log
+  const fullLog=getPelisLog();
+  cont.innerHTML='<div class="hint-row">Mantén pulsado para editar o eliminar</div>'+log.map(p=>{
+    const origIdx=fullLog.indexOf(p);
+    return `<div class="history-item longpress" id="peli-item-${origIdx}">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
         <div class="history-date">${fechaCorta(p.fecha)}${p.nota?' · '+p.nota:''}</div>
       </div>
       <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin-left:6px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+  log.forEach(p=>{
+    const origIdx=fullLog.indexOf(p);
+    const el=document.getElementById('peli-item-'+origIdx);
+    if(el) longpress(el,()=>peliActionSheet(origIdx));
+  });
 }
 
 function renderPelis() {
@@ -724,53 +1121,61 @@ function renderLecturaHistorial() {
   const hist=document.getElementById('lectura-historial');
   const fmtIcons={fisico:'📗',digital:'📱',audio:'🎧'};
   let todosMes=Object.values(getLibrosMes()).flat();
+  const lmKeyed=getLibrosMes();
   const bib=getBiblioteca();
+  const hint='<div class="hint-row">Mantén pulsado para editar o eliminar</div>';
 
   if(librosTipoFiltro==='fisicos') {
     let arr=[...bib];
     if(librosAnyoFiltro!=='todos') arr=arr.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
     if(!arr.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📖</div>Sin libros físicos en este período</div>';return;}
-    hist.innerHTML=arr.map(b=>`
-      <div class="libro-entry">
+    hist.innerHTML=hint+arr.map(b=>`
+      <div class="libro-entry longpress" id="fisico-entry-${b.id}">
         <div class="libro-entry-title">${b.titulo}</div>
         <div class="libro-entry-meta">
           ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
           <span class="chip ${b.leido?'chip-done':'chip-pending'}" style="font-size:10px">${b.leido?'✓ Leído':'○ Pendiente'}</span>
-          <span style="font-size:10px;color:var(--text3)">adq. ${fechaCorta(b.fechaAdq)}</span>
+          ${b.fechaAdq?`<span style="font-size:10px;color:var(--text3)">adq. ${fechaCorta(b.fechaAdq)}</span>`:''}
         </div>
       </div>`).join('');
+    arr.forEach(b=>{ const el=document.getElementById('fisico-entry-'+b.id); if(el) longpress(el,()=>fisicoActionSheet(b.id)); });
     return;
   }
 
   if(librosTipoFiltro==='leidos') {
-    if(librosAnyoFiltro!=='todos') todosMes=todosMes.filter(l=>yearOf(l.fecha)===librosAnyoFiltro);
-    todosMes.sort((a,b)=>b.fecha.localeCompare(a.fecha));
-    if(!todosMes.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin libros leídos en este período</div>';return;}
-    hist.innerHTML=todosMes.map(l=>{
+    // build indexed list to track mk+idx
+    let indexed=[];
+    Object.entries(lmKeyed).forEach(([mk,arr])=>arr.forEach((l,i)=>indexed.push({l,mk,i})));
+    if(librosAnyoFiltro!=='todos') indexed=indexed.filter(x=>yearOf(x.l.fecha)===librosAnyoFiltro);
+    indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
+    if(!indexed.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin libros leídos en este período</div>';return;}
+    hist.innerHTML=hint+indexed.map(({l,mk,i})=>{
       const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
-      return `<div class="libro-entry">
+      return `<div class="libro-entry longpress" id="libro-entry-${mk}-${i}">
         <div class="libro-entry-title">${l.titulo}</div>
         <div class="libro-entry-meta">
           ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
           ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
         </div>
       </div>`;}).join('');
+    indexed.forEach(({mk,i})=>{ const el=document.getElementById(`libro-entry-${mk}-${i}`); if(el) longpress(el,()=>libroLeidoActionSheet(mk,i)); });
     return;
   }
 
   // Todos
-  let leidos=[...todosMes], pendientes=bib.filter(b=>!b.leido);
+  let indexed=[];
+  Object.entries(lmKeyed).forEach(([mk,arr])=>arr.forEach((l,i)=>indexed.push({l,mk,i})));
+  let pendientes=bib.filter(b=>!b.leido);
   if(librosAnyoFiltro!=='todos') {
-    leidos=leidos.filter(l=>yearOf(l.fecha)===librosAnyoFiltro);
+    indexed=indexed.filter(x=>yearOf(x.l.fecha)===librosAnyoFiltro);
     pendientes=pendientes.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
   }
-  leidos.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
+  if(!indexed.length&&!pendientes.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin registros en este período</div>';return;}
 
-  if(!leidos.length&&!pendientes.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin registros en este período</div>';return;}
-
-  const leidosHtml=leidos.map(l=>{
+  const leidosHtml=indexed.map(({l,mk,i})=>{
     const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
-    return `<div class="libro-entry">
+    return `<div class="libro-entry longpress" id="libro-entry-${mk}-${i}">
       <div class="libro-entry-title">${l.titulo}</div>
       <div class="libro-entry-meta">
         <span class="chip chip-done" style="font-size:10px">✓ Leído</span>
@@ -780,7 +1185,7 @@ function renderLecturaHistorial() {
 
   const pendHtml=pendientes.length?`
     <div style="font-size:11px;color:var(--text3);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px">Físicos pendientes (${pendientes.length})</div>
-    ${pendientes.map(b=>`<div class="libro-entry">
+    ${pendientes.map(b=>`<div class="libro-entry longpress" id="fisico-entry-${b.id}">
       <div class="libro-entry-title">${b.titulo}</div>
       <div class="libro-entry-meta">
         ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
@@ -788,7 +1193,9 @@ function renderLecturaHistorial() {
       </div>
     </div>`).join('')}`:'';
 
-  hist.innerHTML=leidosHtml+pendHtml;
+  hist.innerHTML=hint+leidosHtml+pendHtml;
+  indexed.forEach(({mk,i})=>{ const el=document.getElementById(`libro-entry-${mk}-${i}`); if(el) longpress(el,()=>libroLeidoActionSheet(mk,i)); });
+  pendientes.forEach(b=>{ const el=document.getElementById('fisico-entry-'+b.id); if(el) longpress(el,()=>fisicoActionSheet(b.id)); });
 }
 
 function renderLectura() {
@@ -904,7 +1311,7 @@ function renderCursos() {
     return `<div class="card">
       <div class="card-header">
         <div style="flex:1"><div class="card-title">${c.nombre}</div><div class="card-subtitle">${c.vistos} de ${c.total} vídeos (${pct}%)</div></div>
-        <button class="btn-del" onclick="eliminarCurso(${c.id})">✕</button>
+        <button class="btn-del" onclick="cursoEditActionSheet(${c.id})" title="Opciones">⋯</button>
       </div>
       <div class="progress-bar"><div class="progress-fill${done?' done':''}" style="width:${pct}%"></div></div>
       ${done?`<span class="chip chip-done" style="margin-top:7px;display:inline-flex">🎉 Completado</span>`
@@ -933,10 +1340,11 @@ function guardarMedidas() {
 function renderCuerpo() {
   const datos=getMedidas(); const hist=document.getElementById('medidas-historial');
   if(!datos.length){hist.innerHTML='<div class="empty" style="padding:16px 0"><div class="empty-icon">⚖️</div>Sin registros aún</div>';return;}
-  hist.innerHTML=`<table class="medidas-table">
+  hist.innerHTML='<div class="hint-row" style="margin-bottom:6px">Mantén pulsado una fila para editar o eliminar</div>'+
+  `<table class="medidas-table">
     <tr><th>Fecha</th><th>Peso</th><th>Cintura</th><th>Cadera</th><th>Pecho</th></tr>
-    ${datos.map(m=>`
-      <tr>
+    ${datos.map((m,i)=>`
+      <tr id="med-row-${i}" class="longpress" style="cursor:pointer">
         <td style="font-size:11px">${fechaCorta(m.fecha)}</td>
         <td>${m.peso?m.peso+' kg':'—'}</td>
         <td>${m.cintura?m.cintura+' cm':'—'}</td>
@@ -945,6 +1353,7 @@ function renderCuerpo() {
       </tr>
       ${m.nota?`<tr><td colspan="5" style="font-size:10px;color:var(--text3);padding-top:0;padding-bottom:5px">📝 ${m.nota}</td></tr>`:''}`).join('')}
   </table>`;
+  datos.forEach((_,i)=>{ const el=document.getElementById('med-row-'+i); if(el) longpress(el,()=>medidaActionSheet(i)); });
 }
 
 // ══════════════════════════════════════
@@ -987,13 +1396,16 @@ function setDeporteAnyoFiltro(v,btn) {
 function renderDeporteHistorial() {
   let log=getDeporteLog();
   if(deporteAnyoFiltro!=='todos') log=log.filter(s=>yearOf(s.fecha)===deporteAnyoFiltro);
+  const fullLog=getDeporteLog();
   const hist=document.getElementById('deporte-historial');
   if(!log.length){hist.innerHTML='<div class="empty"><div class="empty-icon">🏃</div>Sin sesiones en este período</div>';return;}
-  hist.innerHTML=log.map(s=>`
-    <div class="sport-entry">
+  hist.innerHTML='<div class="hint-row">Mantén pulsado para editar o eliminar</div>'+log.map(s=>{
+    const origIdx=fullLog.indexOf(s);
+    return `<div class="sport-entry longpress" id="dep-entry-${origIdx}">
       <div class="sport-entry-type">${s.actividad}</div>
       <div class="sport-entry-detail">${fechaCorta(s.fecha)}${s.duracion?' · '+s.duracion+' min':''}${s.intensidad?' · '+s.intensidad:''}${s.nota?' · '+s.nota:''}</div>
-    </div>`).join('');
+    </div>`;}).join('');
+  log.forEach(s=>{ const origIdx=fullLog.indexOf(s); const el=document.getElementById('dep-entry-'+origIdx); if(el) longpress(el,()=>deporteActionSheet(origIdx)); });
 }
 function renderDeporte() {
   const sw=semanaKey(now); const semData=getDeporteSem()[sw]||[];
