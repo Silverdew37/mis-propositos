@@ -705,10 +705,11 @@ function renderHistModal() {
   let html='', count=0;
 
   if(histModalSeccion==='pelis') {
-    let log=filtrarPorPeriodo(getPelisLog());
+    const fullLog=getPelisLog();
+    let log=filtrarPorPeriodo(fullLog);
     count=log.length;
-    html=log.length?log.map((p,i)=>{
-      const origIdx=getPelisLog().indexOf(p);
+    html=log.length?log.map(p=>{
+      const origIdx=fullLog.findIndex(x=>x.titulo===p.titulo&&x.fecha===p.fecha&&x.tipo===p.tipo);
       return `<div class="history-item">
         <div style="flex:1">
           <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
@@ -744,7 +745,7 @@ function renderHistModal() {
     let log=filtrarPorPeriodo(fullLog);
     count=log.length;
     html=log.length?log.map(s=>{
-      const origIdx=fullLog.indexOf(s);
+      const origIdx=fullLog.findIndex(x=>x.actividad===s.actividad&&x.fecha===s.fecha&&x.duracion===s.duracion);
       return `<div class="sport-entry" style="display:flex;align-items:flex-start;gap:8px">
         <div style="flex:1">
           <div class="sport-entry-type">${s.actividad}</div>
@@ -760,7 +761,7 @@ function renderHistModal() {
     let filtered=filtrarPorPeriodo(datos);
     count=filtered.length;
     html=filtered.length?filtered.map(m=>{
-      const origIdx=datos.indexOf(m);
+      const origIdx=datos.findIndex(x=>x.fecha===m.fecha&&x.peso===m.peso&&x.cintura===m.cintura);
       return `<div style="display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
         <div style="flex:1;font-size:12px">
           <span style="color:var(--text3);margin-right:8px">${fechaCorta(m.fecha)}</span>
@@ -781,8 +782,9 @@ function renderHistModal() {
 
 // ── PELIS editar/eliminar ──────────────
 function peliActionSheet(idx) {
-  const log=getPelisLog(); const p=log[idx];
-  if(!p) return;
+  const log=getPelisLog();
+  if(idx<0||idx>=log.length){alert('Error: registro no encontrado (idx='+idx+')');return;}
+  const p=log[idx];
   showActionSheet(`${p.titulo}${p.anyo?' ('+p.anyo+')':''}`, [
     {icon:'✏️', label:'Editar', callback:()=>abrirEditPeli(idx)},
     {icon:'🗑️', label:'Eliminar', danger:true, callback:()=>eliminarPeli(idx)},
@@ -1132,8 +1134,9 @@ function renderPelisHistorial() {
   if(!log.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>Sin películas en este período</div>';return;}
   const fullLog=getPelisLog();
   const mostrar=log.slice(0,5);
-  cont.innerHTML=mostrar.map(p=>{
-    const origIdx=fullLog.indexOf(p);
+  cont.innerHTML=mostrar.map((p,i)=>{
+    // buscar índice en fullLog por posición real, no por referencia de objeto
+    const origIdx=fullLog.findIndex((x,xi)=>x.titulo===p.titulo&&x.fecha===p.fecha&&xi>=0);
     return `<div class="history-item">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
@@ -1545,7 +1548,7 @@ function renderDeporteHistorial() {
   if(!log.length){hist.innerHTML='<div class="empty"><div class="empty-icon">🏃</div>Sin sesiones en este período</div>';return;}
   const mostrar=log.slice(0,5);
   hist.innerHTML=mostrar.map(s=>{
-    const origIdx=fullLog.indexOf(s);
+    const origIdx=fullLog.findIndex(x=>x.actividad===s.actividad&&x.fecha===s.fecha&&x.duracion===s.duracion);
     return `<div class="sport-entry" style="display:flex;align-items:flex-start;gap:8px">
       <div style="flex:1">
         <div class="sport-entry-type">${s.actividad}</div>
