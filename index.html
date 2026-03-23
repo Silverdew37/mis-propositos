@@ -7,8 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Mis Propósitos</title>
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="manifest" href="manifest.json">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
   :root {
@@ -215,6 +213,7 @@
     <button class="ftab active" id="pftab-todas" onclick="setPelisSubFiltro('todas',this)">Todas</button>
     <button class="ftab" id="pftab-conjuntas" onclick="setPelisSubFiltro('conjuntas',this)">Solo conjuntas</button>
   </div>
+  <input class="input" id="pelis-buscar" placeholder="🔍 Buscar película..." oninput="renderPelisHistorial()" style="margin-bottom:8px">
   <div id="pelis-historial"></div>
   <button class="btn-ver-todo" onclick="abrirHistorialModal('pelis')">Ver todo el historial →</button>
 </div>
@@ -273,6 +272,7 @@
     <button class="ftab" id="lftab-leidos" onclick="setLibrosFiltroTipo('leidos',this)">Leídos</button>
     <button class="ftab" id="lftab-fisicos" onclick="setLibrosFiltroTipo('fisicos',this)">Físicos</button>
   </div>
+  <input class="input" id="libros-buscar" placeholder="🔍 Buscar libro..." oninput="renderLecturaHistorial()" style="margin-bottom:8px">
   <div id="lectura-historial"></div>
   <button class="btn-ver-todo" onclick="abrirHistorialModal('lectura')">Ver todo el historial →</button>
 </div>
@@ -341,6 +341,10 @@
       <div class="form-group"><label class="input-label">Año (opcional)</label><input class="input" id="peli-anyo" type="number" min="1900" max="2100" placeholder="2025"></div>
       <div class="form-group"><label class="input-label">Fecha vista</label><input class="input" id="peli-fecha" type="date"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Saga (opcional)</label><input class="input" id="peli-saga" placeholder="Ej: El Señor de los Anillos"></div>
+      <div class="form-group"><label class="input-label">Nº en la saga</label><input class="input" id="peli-saga-num" type="number" min="0" step="0.5" placeholder="Ej: 1, 1.5..."></div>
+    </div>
     <div class="form-group"><label class="input-label">Nota (opcional)</label><input class="input" id="peli-nota" placeholder="¿Qué te pareció?"></div>
     <input type="hidden" id="peli-tipo-hidden">
     <button class="btn btn-primary" onclick="guardarPeli()">Guardar</button>
@@ -362,6 +366,10 @@
       <input class="input" id="libro-titulo" placeholder="Título del libro...">
     </div>
     <div class="form-group"><label class="input-label">Autor (opcional)</label><input class="input" id="libro-autor" placeholder="Autor..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Saga (opcional)</label><input class="input" id="libro-saga" placeholder="Ej: Juego de Tronos"></div>
+      <div class="form-group"><label class="input-label">Nº en la saga</label><input class="input" id="libro-saga-num" type="number" min="0" step="0.5" placeholder="Ej: 1, 1.5..."></div>
+    </div>
     <div class="form-group"><label class="input-label">Fecha de fin</label><input class="input" id="libro-fecha" type="date"></div>
     <div class="form-group">
       <label class="input-label">Formato leído (puedes elegir varios)</label>
@@ -382,6 +390,10 @@
     <div class="modal-title">📖 Añadir libro físico</div>
     <div class="form-group"><label class="input-label">Título</label><input class="input" id="fisico-titulo" placeholder="Título..."></div>
     <div class="form-group"><label class="input-label">Autor (opcional)</label><input class="input" id="fisico-autor" placeholder="Autor..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Saga (opcional)</label><input class="input" id="fisico-saga" placeholder="Saga..."></div>
+      <div class="form-group"><label class="input-label">Nº saga</label><input class="input" id="fisico-saga-num" type="number" min="0" step="0.5" placeholder="1, 1.5..."></div>
+    </div>
     <div class="form-group" id="fisico-fecha-group">
       <label class="input-label">Fecha de compra</label>
       <input class="input" id="fisico-fecha" type="date">
@@ -480,13 +492,45 @@
 <div class="modal-overlay" id="modal-historial">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div class="modal-title" id="hist-modal-title" style="margin-bottom:0">Historial</div>
       <span id="hist-modal-count" style="font-size:12px;color:var(--text3)"></span>
     </div>
     <div class="filter-tabs" id="hist-modal-filtros"></div>
+    <div class="filter-tabs" id="hist-modal-orden" style="margin-top:-4px"></div>
+    <input class="input" id="hist-modal-buscar" placeholder="🔍 Buscar..." oninput="renderHistModal()" style="margin-bottom:10px">
     <div id="hist-modal-contenido" class="hist-modal-list"></div>
     <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:14px" onclick="closeModal('modal-historial')">Cerrar</button>
+  </div>
+</div>
+
+<!-- Modal resolución de duplicado -->
+<div class="modal-overlay" id="modal-duplicado">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚠️ Posible duplicado</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:6px">¿Te refieres a este registro ya guardado?</p>
+    <div id="dup-registro-existente" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:10px;font-size:13px"></div>
+    <div id="dup-datos-extra" style="display:none;background:rgba(124,106,247,.08);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--accent3)"></div>
+    <div id="dup-cosmetico" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-secondary" onclick="dupDejarComoEsta()">✓ Sí, dejarlo como está</button>
+      <button class="btn btn-secondary" id="dup-btn-fusionar" onclick="dupFusionar()" style="border-color:var(--border2);color:var(--accent3)">✏️ Editarlo con mis nuevos datos</button>
+      <button class="btn btn-secondary" id="dup-btn-relectura" onclick="dupRelectura()" style="border-color:rgba(74,222,128,.3);color:var(--green)">🔄 Es una relectura / revisión</button>
+      <button class="btn btn-secondary" onclick="dupEsOtro()" style="border-color:rgba(251,191,36,.4);color:var(--amber)">➕ No, es otro diferente</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal "es otro diferente" — pedir dato diferenciador -->
+<div class="modal-overlay" id="modal-dup-diferente">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Añade algo que lo diferencie</div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:12px" id="dup-diferente-hint"></p>
+    <div id="dup-diferente-campos"></div>
+    <button class="btn btn-primary" onclick="dupGuardarDiferente()">Guardar como nuevo</button>
+    <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:7px" onclick="closeModal('modal-dup-diferente')">Cancelar</button>
   </div>
 </div>
 
@@ -507,6 +551,10 @@
     <div class="form-row">
       <div class="form-group"><label class="input-label">Año</label><input class="input" id="edit-peli-anyo" type="number" min="1900" max="2100"></div>
       <div class="form-group"><label class="input-label">Fecha vista</label><input class="input" id="edit-peli-fecha" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Saga</label><input class="input" id="edit-peli-saga" placeholder="Saga..."></div>
+      <div class="form-group"><label class="input-label">Nº saga</label><input class="input" id="edit-peli-saga-num" type="number" min="0" step="0.5"></div>
     </div>
     <div class="form-group"><label class="input-label">Nota</label><input class="input" id="edit-peli-nota" placeholder="¿Qué te pareció?"></div>
     <div class="form-group">
@@ -529,6 +577,10 @@
     <div class="modal-title">Editar libro leído</div>
     <div class="form-group"><label class="input-label">Título</label><input class="input" id="edit-libro-titulo" placeholder="Título..."></div>
     <div class="form-group"><label class="input-label">Autor</label><input class="input" id="edit-libro-autor" placeholder="Autor..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Saga</label><input class="input" id="edit-libro-saga" placeholder="Saga..."></div>
+      <div class="form-group"><label class="input-label">Nº saga</label><input class="input" id="edit-libro-saga-num" type="number" min="0" step="0.5"></div>
+    </div>
     <div class="form-group"><label class="input-label">Fecha de fin</label><input class="input" id="edit-libro-fecha" type="date"></div>
     <div class="form-group">
       <label class="input-label">Formato</label>
@@ -552,6 +604,10 @@
     <div class="modal-title">Editar libro físico</div>
     <div class="form-group"><label class="input-label">Título</label><input class="input" id="edit-fisico-titulo" placeholder="Título..."></div>
     <div class="form-group"><label class="input-label">Autor</label><input class="input" id="edit-fisico-autor" placeholder="Autor..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="input-label">Saga</label><input class="input" id="edit-fisico-saga" placeholder="Saga..."></div>
+      <div class="form-group"><label class="input-label">Nº saga</label><input class="input" id="edit-fisico-saga-num" type="number" min="0" step="0.5"></div>
+    </div>
     <div class="form-group" id="edit-fisico-fecha-group">
       <label class="input-label">Fecha de compra</label>
       <input class="input" id="edit-fisico-fecha" type="date">
@@ -701,31 +757,62 @@ function buildHistFiltros() {
   ).join('');
 }
 
+let histModalOrden = 'fecha';
+
 function abrirHistorialModal(seccion) {
-  histModalSeccion=seccion; histModalFiltro='todo';
+  histModalSeccion=seccion; histModalFiltro='todo'; histModalOrden='fecha';
   const titulos={pelis:'🎬 Películas',lectura:'📚 Lectura',deporte:'🏃 Deporte',medidas:'⚖️ Peso y medidas'};
   document.getElementById('hist-modal-title').textContent=titulos[seccion]||'Historial';
+  document.getElementById('hist-modal-buscar').value='';
   buildHistFiltros();
+  buildHistOrden(seccion);
   renderHistModal();
   openModal('modal-historial');
+}
+
+function buildHistOrden(seccion) {
+  const cont = document.getElementById('hist-modal-orden');
+  let opciones = [{id:'fecha',lbl:'Fecha'}];
+  if(seccion==='pelis') opciones.push({id:'titulo',lbl:'Título'},{id:'saga',lbl:'Saga'},{id:'anyo',lbl:'Año'});
+  if(seccion==='lectura') opciones.push({id:'titulo',lbl:'Título'},{id:'autor',lbl:'Autor'},{id:'saga',lbl:'Saga'});
+  if(seccion==='deporte') opciones.push({id:'actividad',lbl:'Actividad'});
+  cont.innerHTML = opciones.map(o=>
+    `<button class="ftab${histModalOrden===o.id?' active':''}" onclick="histModalOrden='${o.id}';buildHistOrden('${seccion}');renderHistModal()">${o.lbl}</button>`
+  ).join('');
+}
+
+function _sortHistorial(arr, campo) {
+  return [...arr].sort((a,b) => {
+    const va = (a[campo]||'').toString().toLowerCase();
+    const vb = (b[campo]||'').toString().toLowerCase();
+    if(!va && vb) return 1;
+    if(va && !vb) return -1;
+    return va.localeCompare(vb, 'es');
+  });
 }
 
 function renderHistModal() {
   buildHistFiltros();
   const cont=document.getElementById('hist-modal-contenido');
   const fmtIcons={fisico:'📗',digital:'📱',audio:'🎧'};
+  const buscar=(document.getElementById('hist-modal-buscar')?.value||'').trim().toLowerCase();
   let html='', count=0;
 
   if(histModalSeccion==='pelis') {
     const fullLog=getPelisLog();
     let log=filtrarPorPeriodo(fullLog);
+    if(buscar) log=log.filter(p=>p.titulo.toLowerCase().includes(buscar)||(p.saga||'').toLowerCase().includes(buscar));
+    if(histModalOrden==='fecha') log.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    else if(histModalOrden==='titulo') log=_sortHistorial(log,'titulo');
+    else if(histModalOrden==='saga') log=_sortHistorial(log,'saga');
+    else if(histModalOrden==='anyo') log=_sortHistorial(log,'anyo');
     count=log.length;
     html=log.length?log.map(p=>{
       const origIdx=fullLog.findIndex(x=>x.titulo===p.titulo&&x.fecha===p.fecha&&x.tipo===p.tipo);
       return `<div class="history-item">
         <div style="flex:1">
           <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
-          <div class="history-date">${fechaCorta(p.fecha)}${p.nota?' · '+p.nota:''}</div>
+          <div class="history-date">${fechaCorta(p.fecha)}${p.saga?' · <span style="color:var(--accent3)">'+p.saga+(p.sagaNum?' #'+p.sagaNum:'')+'</span>':''}${p.nota?' · '+p.nota:''}</div>
         </div>
         <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin:0 4px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
         <button class="btn-opts" onclick="closeModal('modal-historial');peliActionSheet(${origIdx})">⋯</button>
@@ -738,14 +825,21 @@ function renderHistModal() {
     let indexed=[];
     Object.entries(lmKeyed).forEach(([mk,arr])=>arr.forEach((l,i)=>indexed.push({l,mk,i})));
     indexed=filtrarPorPeriodo(indexed.map(x=>({...x,fecha:x.l.fecha})));
-    indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
+    if(buscar) indexed=indexed.filter(x=>x.l.titulo.toLowerCase().includes(buscar)||(x.l.autor||'').toLowerCase().includes(buscar)||(x.l.saga||'').toLowerCase().includes(buscar));
+    if(histModalOrden==='fecha') indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
+    else if(histModalOrden==='titulo') indexed=_sortHistorial(indexed.map(x=>({...x,...x.l})),'titulo').map(x=>({l:x.l||x,mk:x.mk,i:x.i}));
+    else if(histModalOrden==='autor') indexed=_sortHistorial(indexed.map(x=>({...x,autor:x.l.autor||''})),'autor');
+    else if(histModalOrden==='saga') indexed=_sortHistorial(indexed.map(x=>({...x,saga:x.l.saga||''})),'saga');
     count=indexed.length;
     html=indexed.length?indexed.map(({l,mk,i})=>{
       const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
       return `<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
         <div style="flex:1">
-          <div class="libro-entry-title">${l.titulo}</div>
-          <div class="libro-entry-meta">${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''} ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span></div>
+          <div class="libro-entry-title">${l.titulo}${l.saga?` <span style="font-size:11px;color:var(--accent3);font-weight:400">· ${l.saga}${l.sagaNum?' #'+l.sagaNum:''}</span>`:''}</div>
+          <div class="libro-entry-meta">
+            ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
+            ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
+          </div>
         </div>
         <button class="btn-opts" onclick="closeModal('modal-historial');libroLeidoActionSheet('${mk}',${i})">⋯</button>
       </div>`;}).join('')
@@ -755,6 +849,9 @@ function renderHistModal() {
   else if(histModalSeccion==='deporte') {
     const fullLog=getDeporteLog();
     let log=filtrarPorPeriodo(fullLog);
+    if(buscar) log=log.filter(s=>s.actividad.toLowerCase().includes(buscar));
+    if(histModalOrden==='actividad') log=_sortHistorial(log,'actividad');
+    else log.sort((a,b)=>b.fecha.localeCompare(a.fecha));
     count=log.length;
     html=log.length?log.map(s=>{
       const origIdx=fullLog.findIndex(x=>x.actividad===s.actividad&&x.fecha===s.fecha&&x.duracion===s.duracion);
@@ -771,6 +868,8 @@ function renderHistModal() {
   else if(histModalSeccion==='medidas') {
     const datos=getMedidas();
     let filtered=filtrarPorPeriodo(datos);
+    if(buscar) filtered=filtered.filter(m=>fechaCorta(m.fecha).toLowerCase().includes(buscar)||(m.nota||'').toLowerCase().includes(buscar));
+    filtered.sort((a,b)=>b.fecha.localeCompare(a.fecha));
     count=filtered.length;
     html=filtered.length?filtered.map(m=>{
       const origIdx=datos.findIndex(x=>x.fecha===m.fecha&&x.peso===m.peso&&x.cintura===m.cintura);
@@ -809,6 +908,8 @@ function abrirEditPeli(idx) {
   document.getElementById('edit-peli-fecha').value=p.fecha||hoyStr();
   document.getElementById('edit-peli-nota').value=p.nota||'';
   document.getElementById('edit-peli-tipo').value=p.tipo||'semanal';
+  document.getElementById('edit-peli-saga').value=p.saga||'';
+  document.getElementById('edit-peli-saga-num').value=p.sagaNum||'';
   document.getElementById('edit-peli-idx').value=idx;
   openModal('modal-edit-peli');
 }
@@ -822,6 +923,8 @@ function guardarEditPeli() {
     fecha:document.getElementById('edit-peli-fecha').value||oldEntry.fecha,
     nota:document.getElementById('edit-peli-nota').value.trim(),
     tipo:document.getElementById('edit-peli-tipo').value,
+    saga:document.getElementById('edit-peli-saga').value.trim(),
+    sagaNum:document.getElementById('edit-peli-saga-num').value,
   };
   log[idx]=newEntry; DB.set('pelis-log',log);
   // reconstruir pelis-sem y pelis-mes desde log
@@ -858,6 +961,8 @@ function abrirEditLibro(mk, idx) {
   const l=getLibrosMes()[mk][idx];
   document.getElementById('edit-libro-titulo').value=l.titulo||'';
   document.getElementById('edit-libro-autor').value=l.autor||'';
+  document.getElementById('edit-libro-saga').value=l.saga||'';
+  document.getElementById('edit-libro-saga-num').value=l.sagaNum||'';
   document.getElementById('edit-libro-fecha').value=l.fecha||hoyStr();
   document.querySelectorAll('#edit-libro-formatos .fmt-btn').forEach(b=>{
     b.classList.toggle('sel',(l.formatos||[]).includes(b.dataset.fmt));
@@ -875,6 +980,8 @@ function guardarEditLibro() {
   lm[mk][idx]={
     titulo:document.getElementById('edit-libro-titulo').value.trim()||lm[mk][idx].titulo,
     autor:document.getElementById('edit-libro-autor').value.trim(),
+    saga:document.getElementById('edit-libro-saga').value.trim(),
+    sagaNum:document.getElementById('edit-libro-saga-num').value,
     fecha:newFecha, formatos,
   };
   // si la fecha cambió de mes, mover al mes correcto
@@ -906,6 +1013,8 @@ function abrirEditFisico(id) {
   const b=getBiblioteca().find(x=>x.id===id);
   document.getElementById('edit-fisico-titulo').value=b.titulo||'';
   document.getElementById('edit-fisico-autor').value=b.autor||'';
+  document.getElementById('edit-fisico-saga').value=b.saga||'';
+  document.getElementById('edit-fisico-saga-num').value=b.sagaNum||'';
   const sinFecha=!b.fechaAdq;
   document.getElementById('edit-fisico-sin-fecha').checked=sinFecha;
   document.getElementById('edit-fisico-fecha').value=b.fechaAdq||hoyStr();
@@ -920,6 +1029,8 @@ function guardarEditFisico() {
   const sinFecha=document.getElementById('edit-fisico-sin-fecha').checked;
   bib[idx].titulo=document.getElementById('edit-fisico-titulo').value.trim()||bib[idx].titulo;
   bib[idx].autor=document.getElementById('edit-fisico-autor').value.trim();
+  bib[idx].saga=document.getElementById('edit-fisico-saga').value.trim();
+  bib[idx].sagaNum=document.getElementById('edit-fisico-saga-num').value;
   bib[idx].fechaAdq=sinFecha?null:(document.getElementById('edit-fisico-fecha').value||bib[idx].fechaAdq);
   DB.set('libros-biblioteca',bib);
   closeModal('modal-edit-fisico'); renderLectura();
@@ -1101,9 +1212,301 @@ function getPelisLog()  { return DB.get('pelis-log')||[]; }
 function openModalPeli(tipo) {
   document.getElementById('modal-peli-title').textContent = tipo==='conjunta'?'💑 Peli conjunta':'🎬 Peli vista';
   document.getElementById('peli-tipo-hidden').value = tipo;
-  ['peli-titulo','peli-anyo','peli-nota'].forEach(id=>document.getElementById(id).value='');
+  ['peli-titulo','peli-anyo','peli-nota','peli-saga','peli-saga-num'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('peli-fecha').value = hoyStr();
   openModal('modal-peli');
+}
+
+// ══════════════════════════════════════
+// NORMALIZACIÓN PARA DUPLICADOS
+// ══════════════════════════════════════
+function normalizar(s) {
+  if(!s) return '';
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quitar tildes
+    .replace(/[,:;¿?¡!'"()]/g,'')                    // quitar puntuación
+    .replace(/\s+/g,' ').trim();
+}
+
+// Estado temporal del duplicado pendiente de resolver
+let _dupPendiente = null; // { tipo:'peli'|'libro'|'fisico', nuevo:{}, existente:{}, existenteRef }
+
+function dupDejarComoEsta() {
+  closeModal('modal-duplicado');
+  _dupPendiente = null;
+}
+
+function dupRelectura() {
+  closeModal('modal-duplicado');
+  if(!_dupPendiente) return;
+  const {tipo, nuevo, existente} = _dupPendiente;
+
+  // Fusionar campos: para cada campo, usar el del nuevo si existe, si no el del existente
+  let entry;
+  if(tipo === 'peli') {
+    const campos = ['titulo','anyo','nota','saga','sagaNum','tipo'];
+    entry = {...existente, ...nuevo}; // nuevo sobreescribe existente
+    // pero si un campo solo existe en existente, lo conservamos
+    campos.forEach(c => { if(!nuevo[c] && existente[c]) entry[c] = existente[c]; });
+    entry.fecha = nuevo.fecha; // la fecha es la nueva (la del revisionado)
+  } else {
+    const campos = ['titulo','autor','saga','sagaNum'];
+    entry = {...existente, ...nuevo};
+    campos.forEach(c => { if(!nuevo[c] && existente[c]) entry[c] = existente[c]; });
+    // fusionar formatos de ambos
+    entry.formatos = [...new Set([...(existente.formatos||[]),...(nuevo.formatos||[])])];
+    entry.fecha = nuevo.fecha;
+  }
+
+  if(tipo === 'peli') _commitPeli(entry);
+  else _commitLibro(entry);
+  _dupPendiente = null;
+}
+
+function dupFusionar() {
+  closeModal('modal-duplicado');
+  if(!_dupPendiente) return;
+  const {tipo, nuevo, existente, existenteRef} = _dupPendiente;
+  const labels = {anyo:'Año', nota:'Nota', saga:'Saga', sagaNum:'Nº saga', autor:'Autor'};
+
+  if(tipo === 'peli') {
+    const camposPeli = ['anyo','nota','saga','sagaNum'];
+    const conflictos = camposPeli.filter(c =>
+      nuevo[c] && existente[c] && normalizar(String(nuevo[c])) !== normalizar(String(existente[c]))
+    );
+    const fusionado = {...existente};
+    camposPeli.forEach(c => { if(nuevo[c] && !existente[c]) fusionado[c] = nuevo[c]; });
+    if(nuevo.fecha) fusionado.fecha = nuevo.fecha;
+    if(nuevo.tipo) fusionado.tipo = nuevo.tipo;
+
+    if(conflictos.length > 0) {
+      _mostrarConflictos('peli', conflictos, fusionado, labels);
+    } else {
+      _guardarPeliFusionada(fusionado, existenteRef);
+    }
+  }
+
+  if(tipo === 'libro') {
+    const camposLibro = ['autor','saga','sagaNum'];
+    const conflictos = camposLibro.filter(c =>
+      nuevo[c] && existente[c] && normalizar(String(nuevo[c])) !== normalizar(String(existente[c]))
+    );
+    const fusionado = {...existente};
+    camposLibro.forEach(c => { if(nuevo[c] && !existente[c]) fusionado[c] = nuevo[c]; });
+    if(nuevo.fecha) fusionado.fecha = nuevo.fecha;
+    if(nuevo.formatos?.length) fusionado.formatos = [...new Set([...(existente.formatos||[]),...nuevo.formatos])];
+
+    if(conflictos.length > 0) {
+      _mostrarConflictos('libro', conflictos, fusionado, labels);
+    } else {
+      _guardarLibroFusionado(fusionado, existenteRef);
+    }
+  }
+}
+
+function _mostrarConflictos(tipo, conflictos, fusionado, labels) {
+  _dupPendiente.fusionado = fusionado;
+  _dupPendiente.conflictosPendientes = [...conflictos];
+  _dupPendiente._modo = 'fusionar';
+  const {nuevo, existente} = _dupPendiente;
+  let html = '<p style="font-size:12px;color:var(--text3);margin-bottom:12px">Hay campos con valores distintos en ambos registros. Elige con cuál quedarte:</p>';
+  conflictos.forEach(c => {
+    html += `<div style="margin-bottom:12px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:600">${labels[c]||c}</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" style="flex:1" data-campo="${c}" data-cual="existente" onclick="dupElegirCampo('${tipo}','${c}','existente',this)">📁 ${existente[c]}</button>
+        <button class="btn btn-secondary btn-sm" style="flex:1;border-color:var(--border2);color:var(--accent3)" data-campo="${c}" data-cual="nuevo" onclick="dupElegirCampo('${tipo}','${c}','nuevo',this)">✏️ ${nuevo[c]}</button>
+      </div>
+      <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:2px">← guardado · nuevo →</div>
+    </div>`;
+  });
+  document.getElementById('dup-diferente-hint').innerHTML = '';
+  document.getElementById('dup-diferente-campos').innerHTML = html;
+  openModal('modal-dup-diferente');
+}
+
+function dupElegirCampo(tipo, campo, cual, btn) {
+  if(!_dupPendiente) return;
+  const val = cual === 'nuevo' ? _dupPendiente.nuevo[campo] : _dupPendiente.existente[campo];
+  _dupPendiente.fusionado[campo] = val;
+  _dupPendiente.conflictosPendientes = _dupPendiente.conflictosPendientes.filter(c=>c!==campo);
+  // marcar visualmente
+  btn.closest('div').querySelectorAll('button').forEach(b=>{ b.style.opacity='0.5'; b.style.borderColor=''; b.style.color=''; });
+  btn.style.opacity='1'; btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
+  if(_dupPendiente.conflictosPendientes.length === 0) {
+    closeModal('modal-dup-diferente');
+    if(tipo === 'peli') _guardarPeliFusionada(_dupPendiente.fusionado, _dupPendiente.existenteRef);
+    if(tipo === 'libro') _guardarLibroFusionado(_dupPendiente.fusionado, _dupPendiente.existenteRef);
+    _dupPendiente = null;
+  }
+}
+
+function _guardarPeliFusionada(fusionado, existenteRef) {
+  const log = getPelisLog();
+  const idx = log.findIndex(p => p.titulo===existenteRef.titulo && p.fecha===existenteRef.fecha);
+  if(idx >= 0) { log[idx] = fusionado; DB.set('pelis-log', log); reconstruirPelisSemMes(); }
+  closeModal('modal-peli'); renderPelis(); _dupPendiente = null;
+}
+
+function _guardarLibroFusionado(fusionado, existenteRef) {
+  const lm = getLibrosMes();
+  let guardado = false;
+  Object.entries(lm).forEach(([mk, arr]) => {
+    const i = arr.findIndex(l => l.titulo===existenteRef.titulo && l.fecha===existenteRef.fecha);
+    if(i >= 0) { lm[mk][i] = fusionado; guardado = true; }
+  });
+  if(guardado) DB.set('libros-mes', lm);
+  closeModal('modal-libro-leido'); renderLectura(); _dupPendiente = null;
+}
+
+function dupEsOtro() {
+  closeModal('modal-duplicado');
+  if(!_dupPendiente) return;
+  _dupPendiente._modo = 'otro';
+  const tipo = _dupPendiente.tipo;
+  const hint = tipo === 'peli'
+    ? 'Para diferenciarlo, añade al menos el año o la saga:'
+    : 'Para diferenciarlo, añade al menos el autor o la saga:';
+  document.getElementById('dup-diferente-hint').textContent = hint;
+  let campos = '';
+  if(tipo === 'peli') {
+    campos = `
+      <div class="form-group"><label class="input-label">Año (obligatorio si no hay saga)</label><input class="input" id="dup-anyo" type="number" min="1900" max="2100" value="${_dupPendiente.nuevo.anyo||''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="input-label">Saga</label><input class="input" id="dup-saga" value="${_dupPendiente.nuevo.saga||''}"></div>
+        <div class="form-group"><label class="input-label">Nº saga</label><input class="input" id="dup-saga-num" type="number" step="0.5" value="${_dupPendiente.nuevo.sagaNum||''}"></div>
+      </div>`;
+  } else {
+    campos = `
+      <div class="form-group"><label class="input-label">Autor (obligatorio si no hay saga)</label><input class="input" id="dup-autor" value="${_dupPendiente.nuevo.autor||''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="input-label">Saga</label><input class="input" id="dup-saga" value="${_dupPendiente.nuevo.saga||''}"></div>
+        <div class="form-group"><label class="input-label">Nº saga</label><input class="input" id="dup-saga-num" type="number" step="0.5" value="${_dupPendiente.nuevo.sagaNum||''}"></div>
+      </div>`;
+  }
+  document.getElementById('dup-diferente-campos').innerHTML = campos;
+  openModal('modal-dup-diferente');
+}
+
+function dupGuardarDiferente() {
+  if(!_dupPendiente) return;
+  const tipo = _dupPendiente.tipo;
+  if(tipo === 'peli') {
+    const anyo = document.getElementById('dup-anyo')?.value||'';
+    const saga = document.getElementById('dup-saga')?.value.trim()||'';
+    const sagaNum = document.getElementById('dup-saga-num')?.value||'';
+    if(!anyo && !saga) { alert('Añade al menos el año o la saga para diferenciarlo.'); return; }
+    _commitPeli({..._dupPendiente.nuevo, anyo, saga, sagaNum});
+  } else {
+    const autor = document.getElementById('dup-autor')?.value.trim()||'';
+    const saga = document.getElementById('dup-saga')?.value.trim()||'';
+    const sagaNum = document.getElementById('dup-saga-num')?.value||'';
+    if(!autor && !saga) { alert('Añade al menos el autor o la saga para diferenciarlo.'); return; }
+    _commitLibro({..._dupPendiente.nuevo, autor, saga, sagaNum});
+  }
+  closeModal('modal-dup-diferente');
+  _dupPendiente = null;
+}
+
+function _commitPeli(entry) {
+  const log = getPelisLog(); log.unshift(entry); DB.set('pelis-log', log);
+  const sw = semanaKey(new Date(entry.fecha+'T12:00:00'));
+  const sd = getPelisSem(); if(!sd[sw])sd[sw]=[]; sd[sw].push(entry); DB.set('pelis-sem',sd);
+  if(entry.tipo==='conjunta') {
+    const mk = mesKey(new Date(entry.fecha+'T12:00:00'));
+    const md = getPelisMes(); if(!md[mk])md[mk]=[]; md[mk].push(entry); DB.set('pelis-mes',md);
+  }
+  closeModal('modal-peli'); renderPelis();
+}
+
+function _commitLibro(entry) {
+  const mk = mesKey(new Date(entry.fecha+'T12:00:00'));
+  const lm = getLibrosMes(); if(!lm[mk])lm[mk]=[];
+  lm[mk].push(entry); DB.set('libros-mes',lm);
+  if((entry.formatos||[]).includes('fisico')) {
+    const bib = getBiblioteca();
+    const idx = bib.findIndex(b=>normalizar(b.titulo)===normalizar(entry.titulo)&&!b.leido);
+    if(idx>=0){bib[idx].leido=true;bib[idx].fechaLeido=entry.fecha;DB.set('libros-biblioteca',bib);}
+  }
+  closeModal('modal-libro-leido'); renderLectura();
+}
+
+function mostrarModalDuplicado(tipo, nuevo, existente, existenteRef) {
+  _dupPendiente = {tipo, nuevo, existente: {...existente}, existenteRef};
+
+  // Detectar diferencias cosméticas: misma normalización pero distinta escritura real
+  const camposPeli  = ['titulo','anyo','saga','sagaNum','nota'];
+  const camposLibro = ['titulo','autor','saga','sagaNum'];
+  const campos = tipo === 'peli' ? camposPeli : camposLibro;
+  const labels = {titulo:'Título', autor:'Autor', saga:'Saga', sagaNum:'Nº saga', nota:'Nota', anyo:'Año'};
+  const cosmeticos = campos.filter(c =>
+    nuevo[c] && existente[c] &&
+    String(nuevo[c]) !== String(existente[c]) &&          // son distintos en escritura
+    normalizar(String(nuevo[c])) === normalizar(String(existente[c])) // pero iguales normalizados
+  );
+
+  // Construir info del registro existente
+  let html = '';
+  if(tipo === 'peli') {
+    html = `<strong>${existente.titulo}</strong>${existente.anyo?' ('+existente.anyo+')':''}`;
+    if(existente.saga) html += `<br><span style="font-size:11px;color:var(--accent3)">${existente.saga}${existente.sagaNum?' #'+existente.sagaNum:''}</span>`;
+    html += `<br><span style="font-size:11px;color:var(--text3)">Vista el ${fechaCorta(existente.fecha)}</span>`;
+    if(existente.nota) html += `<br><span style="font-size:11px;color:var(--text3)">📝 ${existente.nota}</span>`;
+  } else {
+    html = `<strong>${existente.titulo}</strong>`;
+    if(existente.autor) html += `<br><span style="font-size:11px;color:var(--text3)">${existente.autor}</span>`;
+    if(existente.saga) html += `<br><span style="font-size:11px;color:var(--accent3)">${existente.saga}${existente.sagaNum?' #'+existente.sagaNum:''}</span>`;
+    html += `<br><span style="font-size:11px;color:var(--text3)">Leído el ${fechaCorta(existente.fecha)}</span>`;
+  }
+  document.getElementById('dup-registro-existente').innerHTML = html;
+
+  // Mostrar datos extra (campos solo en uno de los dos)
+  const soloEnNuevo     = campos.filter(c => nuevo[c] && !existente[c]);
+  const soloEnExistente = campos.filter(c => existente[c] && !nuevo[c]);
+  const extraDiv = document.getElementById('dup-datos-extra');
+  let extraHtml = '';
+  if(soloEnNuevo.length)     extraHtml += `<div style="margin-bottom:4px">✏️ <strong>Solo en lo nuevo:</strong> ${soloEnNuevo.map(c=>`${labels[c]}: ${nuevo[c]}`).join(', ')}</div>`;
+  if(soloEnExistente.length) extraHtml += `<div>📁 <strong>Solo en el guardado:</strong> ${soloEnExistente.map(c=>`${labels[c]}: ${existente[c]}`).join(', ')}</div>`;
+  if(extraHtml) { extraDiv.style.display='block'; extraDiv.innerHTML=extraHtml; }
+  else { extraDiv.style.display='none'; }
+
+  // Selector cosmético: campos que difieren solo en escritura
+  const cosmeticoDiv = document.getElementById('dup-cosmetico');
+  if(cosmeticos.length > 0) {
+    _dupPendiente._cosmeticosPendientes = [...cosmeticos];
+    let cHtml = `<div style="margin-bottom:8px;font-size:12px;color:var(--text2);font-weight:500">Hay diferencias de escritura. Elige la versión que prefieras para cada campo:</div>`;
+    cosmeticos.forEach(c => {
+      cHtml += `<div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">${labels[c]||c}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" style="flex:1" id="cosm-${c}-existente" onclick="elegirCosmetico('${c}','existente',this)">${existente[c]}</button>
+          <button class="btn btn-secondary btn-sm" style="flex:1" id="cosm-${c}-nuevo" onclick="elegirCosmetico('${c}','nuevo',this)">${nuevo[c]}</button>
+        </div>
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:2px">← guardado · nuevo →</div>
+      </div>`;
+    });
+    cosmeticoDiv.style.display = 'block';
+    cosmeticoDiv.innerHTML = cHtml;
+  } else {
+    cosmeticoDiv.style.display = 'none';
+    cosmeticoDiv.innerHTML = '';
+    _dupPendiente._cosmeticosPendientes = [];
+  }
+
+  openModal('modal-duplicado');
+}
+
+function elegirCosmetico(campo, cual, btn) {
+  if(!_dupPendiente) return;
+  const val = cual === 'nuevo' ? _dupPendiente.nuevo[campo] : _dupPendiente.existente[campo];
+  // Actualizar el campo en AMBOS (existente y nuevo) para que se use la versión elegida en cualquier acción
+  _dupPendiente.existente[campo] = val;
+  _dupPendiente.nuevo[campo] = val;
+  // Feedback visual
+  const par = btn.closest('div');
+  par.querySelectorAll('button').forEach(b => { b.style.opacity='0.45'; b.style.borderColor=''; b.style.color=''; });
+  btn.style.opacity='1'; btn.style.borderColor='var(--green)'; btn.style.color='var(--green)';
+  _dupPendiente._cosmeticosPendientes = (_dupPendiente._cosmeticosPendientes||[]).filter(c=>c!==campo);
 }
 
 function guardarPeli() {
@@ -1113,18 +1516,17 @@ function guardarPeli() {
   const nota   = document.getElementById('peli-nota').value.trim();
   const fecha  = document.getElementById('peli-fecha').value||hoyStr();
   const tipo   = document.getElementById('peli-tipo-hidden').value;
-  const entry  = {titulo,anyo,nota,fecha,tipo};
+  const saga   = document.getElementById('peli-saga').value.trim();
+  const sagaNum= document.getElementById('peli-saga-num').value;
 
-  const log=getPelisLog(); log.unshift(entry); DB.set('pelis-log',log);
-
-  const sw=semanaKey(new Date(fecha+'T12:00:00'));
-  const sd=getPelisSem(); if(!sd[sw])sd[sw]=[]; sd[sw].push(entry); DB.set('pelis-sem',sd);
-
-  if(tipo==='conjunta') {
-    const mk=mesKey(new Date(fecha+'T12:00:00'));
-    const md=getPelisMes(); if(!md[mk])md[mk]=[]; md[mk].push(entry); DB.set('pelis-mes',md);
+  const log = getPelisLog();
+  const tN = normalizar(titulo);
+  const duplicado = log.find(p => normalizar(p.titulo) === tN);
+  if(duplicado) {
+    mostrarModalDuplicado('peli', {titulo,anyo,nota,fecha,tipo,saga,sagaNum}, duplicado, duplicado);
+    return;
   }
-  closeModal('modal-peli'); renderPelis();
+  _commitPeli({titulo,anyo,nota,fecha,tipo,saga,sagaNum});
 }
 
 function setPelisSubFiltro(v,btn) {
@@ -1142,17 +1544,18 @@ function renderPelisHistorial() {
   let log=getPelisLog();
   if(pelisTipoFiltro==='conjuntas') log=log.filter(p=>p.tipo==='conjunta');
   if(pelisAnyoFiltro!=='todos') log=log.filter(p=>yearOf(p.fecha)===pelisAnyoFiltro);
+  const buscar = (document.getElementById('pelis-buscar')?.value||'').trim().toLowerCase();
+  if(buscar) log=log.filter(p=>p.titulo.toLowerCase().includes(buscar)||(p.saga||'').toLowerCase().includes(buscar));
   const cont=document.getElementById('pelis-historial');
   if(!log.length){cont.innerHTML='<div class="empty"><div class="empty-icon">🎬</div>Sin películas en este período</div>';return;}
   const fullLog=getPelisLog();
-  const mostrar=log.slice(0,5);
+  const mostrar=buscar?log:log.slice(0,5);
   cont.innerHTML=mostrar.map((p,i)=>{
-    // buscar índice en fullLog por posición real, no por referencia de objeto
     const origIdx=fullLog.findIndex((x,xi)=>x.titulo===p.titulo&&x.fecha===p.fecha&&xi>=0);
     return `<div class="history-item">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:500">${p.titulo}${p.anyo?' <span style="color:var(--text3);font-weight:400">('+p.anyo+')</span>':''}</div>
-        <div class="history-date">${fechaCorta(p.fecha)}${p.nota?' · '+p.nota:''}</div>
+        <div class="history-date">${fechaCorta(p.fecha)}${p.saga?' · <span style="color:var(--accent3)">'+p.saga+(p.sagaNum?' #'+p.sagaNum:'')+'</span>':''}${p.nota?' · '+p.nota:''}</div>
       </div>
       <span class="chip ${p.tipo==='conjunta'?'chip-info':'chip-done'}" style="flex-shrink:0;margin:0 4px">${p.tipo==='conjunta'?'💑':'🎬'}</span>
       <button class="btn-opts" onclick="peliActionSheet(${origIdx})">⋯</button>
@@ -1197,7 +1600,7 @@ function getLibrosMes()   { return DB.get('libros-mes')||{}; }
 function getBiblioteca()  { return DB.get('libros-biblioteca')||[]; }
 
 function abrirModalLibroLeido() {
-  ['libro-titulo','libro-autor'].forEach(id=>document.getElementById(id).value='');
+  ['libro-titulo','libro-autor','libro-saga','libro-saga-num'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('libro-fecha').value=hoyStr();
   document.querySelectorAll('.fmt-btn').forEach(b=>b.classList.remove('sel'));
   // selector físicos disponibles
@@ -1206,15 +1609,17 @@ function abrirModalLibroLeido() {
   const lista=document.getElementById('lista-fisicos-sel');
   if(bib.length>0) {
     wrap.style.display='block';
-    lista.innerHTML=bib.map(b=>`<div class="sel-item" onclick="selFisico(this,'${b.titulo.replace(/'/g,"\\'")}')">📗 ${b.titulo}${b.autor?' — <span style=\'color:var(--text3)\'>'+b.autor+'</span>':''}</div>`).join('');
+    lista.innerHTML=bib.map(b=>`<div class="sel-item" onclick="selFisico(this,'${b.titulo.replace(/'/g,"\\'")}','${(b.autor||'').replace(/'/g,"\\'")}','${(b.saga||'').replace(/'/g,"\\'")}','${b.sagaNum||''}')">📗 ${b.titulo}${b.saga?` <span style='color:var(--accent3);font-size:10px'>${b.saga}${b.sagaNum?' #'+b.sagaNum:''}</span>`:''}${b.autor?` — <span style='color:var(--text3)'>${b.autor}</span>`:''}</div>`).join('');
   } else { wrap.style.display='none'; }
   openModal('modal-libro-leido');
 }
-function selFisico(el,titulo) {
+function selFisico(el,titulo,autor,saga,sagaNum) {
   document.querySelectorAll('#lista-fisicos-sel .sel-item').forEach(i=>i.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('libro-titulo').value=titulo;
-  // Auto-seleccionar formato físico
+  if(autor) document.getElementById('libro-autor').value=autor;
+  if(saga) document.getElementById('libro-saga').value=saga;
+  if(sagaNum) document.getElementById('libro-saga-num').value=sagaNum;
   document.querySelectorAll('.fmt-btn').forEach(b=>{ if(b.dataset.fmt==='fisico') b.classList.add('sel'); });
 }
 
@@ -1222,19 +1627,19 @@ function guardarLibroLeido() {
   const titulo=document.getElementById('libro-titulo').value.trim();
   if(!titulo){alert('Indica el título del libro');return;}
   const autor=document.getElementById('libro-autor').value.trim();
+  const saga=document.getElementById('libro-saga').value.trim();
+  const sagaNum=document.getElementById('libro-saga-num').value;
   const fecha=document.getElementById('libro-fecha').value||hoyStr();
   const formatos=[...document.querySelectorAll('.fmt-btn.sel')].map(b=>b.dataset.fmt);
-  const mk=mesKey(new Date(fecha+'T12:00:00'));
-  const lm=getLibrosMes(); if(!lm[mk])lm[mk]=[];
-  lm[mk].push({titulo,autor,fecha,formatos}); DB.set('libros-mes',lm);
 
-  // marcar físico como leído si aplica
-  if(formatos.includes('fisico')) {
-    const bib=getBiblioteca();
-    const idx=bib.findIndex(b=>b.titulo.toLowerCase()===titulo.toLowerCase()&&!b.leido);
-    if(idx>=0){bib[idx].leido=true;bib[idx].fechaLeido=fecha;DB.set('libros-biblioteca',bib);}
+  const todosLeidos=Object.values(getLibrosMes()).flat();
+  const tN=normalizar(titulo);
+  const duplicado=todosLeidos.find(l=>normalizar(l.titulo)===tN);
+  if(duplicado) {
+    mostrarModalDuplicado('libro', {titulo,autor,saga,sagaNum,fecha,formatos}, duplicado, duplicado);
+    return;
   }
-  closeModal('modal-libro-leido'); renderLectura();
+  _commitLibro({titulo,autor,saga,sagaNum,fecha,formatos});
 }
 
 function toggleFisicoFecha(cb) {
@@ -1243,7 +1648,7 @@ function toggleFisicoFecha(cb) {
 }
 
 function abrirModalFisicoNuevo() {
-  ['fisico-titulo','fisico-autor'].forEach(id=>document.getElementById(id).value='');
+  ['fisico-titulo','fisico-autor','fisico-saga','fisico-saga-num'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fisico-fecha').value=hoyStr();
   document.getElementById('fisico-fecha').disabled=false;
   document.getElementById('fisico-fecha-group').style.opacity='1';
@@ -1254,10 +1659,12 @@ function guardarLibroFisicoNuevo() {
   const titulo=document.getElementById('fisico-titulo').value.trim();
   if(!titulo){alert('Indica el título');return;}
   const autor=document.getElementById('fisico-autor').value.trim();
+  const saga=document.getElementById('fisico-saga').value.trim();
+  const sagaNum=document.getElementById('fisico-saga-num').value;
   const sinFecha=document.getElementById('fisico-sin-fecha').checked;
   const fecha=sinFecha ? null : (document.getElementById('fisico-fecha').value||hoyStr());
   const bib=getBiblioteca();
-  bib.push({id:Date.now(),titulo,autor,fechaAdq:fecha,leido:false,fechaLeido:null});
+  bib.push({id:Date.now(),titulo,autor,saga,sagaNum,fechaAdq:fecha,leido:false,fechaLeido:null});
   DB.set('libros-biblioteca',bib);
   closeModal('modal-libro-fisico-nuevo'); renderLectura();
 }
@@ -1278,15 +1685,17 @@ function renderLecturaHistorial() {
   const fmtIcons={fisico:'📗',digital:'📱',audio:'🎧'};
   const lmKeyed=getLibrosMes();
   const bib=getBiblioteca();
+  const buscar=(document.getElementById('libros-buscar')?.value||'').trim().toLowerCase();
 
   if(librosTipoFiltro==='fisicos') {
     let arr=[...bib];
     if(librosAnyoFiltro!=='todos') arr=arr.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
+    if(buscar) arr=arr.filter(b=>b.titulo.toLowerCase().includes(buscar)||(b.autor||'').toLowerCase().includes(buscar)||(b.saga||'').toLowerCase().includes(buscar));
     if(!arr.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📖</div>Sin libros físicos en este período</div>';return;}
     hist.innerHTML=arr.map(b=>`
       <div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
         <div style="flex:1">
-          <div class="libro-entry-title">${b.titulo}</div>
+          <div class="libro-entry-title">${b.titulo}${b.saga?` <span style="font-size:11px;color:var(--accent3);font-weight:400">· ${b.saga}${b.sagaNum?' #'+b.sagaNum:''}</span>`:''}</div>
           <div class="libro-entry-meta">
             ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
             <span class="chip ${b.leido?'chip-done':'chip-pending'}" style="font-size:10px">${b.leido?'✓ Leído':'○ Pendiente'}</span>
@@ -1302,13 +1711,14 @@ function renderLecturaHistorial() {
     let indexed=[];
     Object.entries(lmKeyed).forEach(([mk,arr])=>arr.forEach((l,i)=>indexed.push({l,mk,i})));
     if(librosAnyoFiltro!=='todos') indexed=indexed.filter(x=>yearOf(x.l.fecha)===librosAnyoFiltro);
+    if(buscar) indexed=indexed.filter(x=>x.l.titulo.toLowerCase().includes(buscar)||(x.l.autor||'').toLowerCase().includes(buscar)||(x.l.saga||'').toLowerCase().includes(buscar));
     indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
     if(!indexed.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin libros leídos en este período</div>';return;}
     hist.innerHTML=indexed.map(({l,mk,i})=>{
       const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
       return `<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
         <div style="flex:1">
-          <div class="libro-entry-title">${l.titulo}</div>
+          <div class="libro-entry-title">${l.titulo}${l.saga?` <span style="font-size:11px;color:var(--accent3);font-weight:400">· ${l.saga}${l.sagaNum?' #'+l.sagaNum:''}</span>`:''}</div>
           <div class="libro-entry-meta">
             ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
             ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
@@ -1327,6 +1737,10 @@ function renderLecturaHistorial() {
     indexed=indexed.filter(x=>yearOf(x.l.fecha)===librosAnyoFiltro);
     pendientes=pendientes.filter(b=>yearOf(b.fechaAdq)===librosAnyoFiltro);
   }
+  if(buscar) {
+    indexed=indexed.filter(x=>x.l.titulo.toLowerCase().includes(buscar)||(x.l.autor||'').toLowerCase().includes(buscar)||(x.l.saga||'').toLowerCase().includes(buscar));
+    pendientes=pendientes.filter(b=>b.titulo.toLowerCase().includes(buscar)||(b.autor||'').toLowerCase().includes(buscar)||(b.saga||'').toLowerCase().includes(buscar));
+  }
   indexed.sort((a,b)=>b.l.fecha.localeCompare(a.l.fecha));
   if(!indexed.length&&!pendientes.length){hist.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin registros en este período</div>';return;}
 
@@ -1334,9 +1748,10 @@ function renderLecturaHistorial() {
     const fch=(l.formatos||[]).map(f=>`<span class="chip-format">${fmtIcons[f]||''} ${f}</span>`).join('');
     return `<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
       <div style="flex:1">
-        <div class="libro-entry-title">${l.titulo}</div>
+        <div class="libro-entry-title">${l.titulo}${l.saga?` <span style="font-size:11px;color:var(--accent3);font-weight:400">· ${l.saga}${l.sagaNum?' #'+l.sagaNum:''}</span>`:''}</div>
         <div class="libro-entry-meta">
           <span class="chip chip-done" style="font-size:10px">✓ Leído</span>
+          ${l.autor?`<span style="font-size:11px;color:var(--text3)">${l.autor}</span>`:''}
           ${fch}<span style="font-size:10px;color:var(--text3)">${fechaCorta(l.fecha)}</span>
         </div>
       </div>
@@ -1347,7 +1762,7 @@ function renderLecturaHistorial() {
     <div style="font-size:11px;color:var(--text3);margin:12px 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.6px">Físicos pendientes (${pendientes.length})</div>
     ${pendientes.map(b=>`<div class="libro-entry" style="display:flex;align-items:flex-start;gap:8px">
       <div style="flex:1">
-        <div class="libro-entry-title">${b.titulo}</div>
+        <div class="libro-entry-title">${b.titulo}${b.saga?` <span style="font-size:11px;color:var(--accent3);font-weight:400">· ${b.saga}${b.sagaNum?' #'+b.sagaNum:''}</span>`:''}</div>
         <div class="libro-entry-meta">
           ${b.autor?`<span style="font-size:11px;color:var(--text3)">${b.autor}</span>`:''}
           <span class="chip chip-pending" style="font-size:10px">○ Pendiente</span>
